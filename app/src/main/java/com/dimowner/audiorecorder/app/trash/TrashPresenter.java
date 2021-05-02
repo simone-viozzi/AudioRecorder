@@ -32,122 +32,162 @@ import java.util.List;
 
 /**
  * Created on 15.12.2019.
+ *
  * @author Dimowner
  */
-public class TrashPresenter implements TrashContract.UserActionsListener {
+public class TrashPresenter implements TrashContract.UserActionsListener
+{
 
-	private TrashContract.View view;
-	private final BackgroundQueue loadingTasks;
-	private final BackgroundQueue recordingsTasks;
-	private final FileRepository fileRepository;
-	private final LocalRepository localRepository;
+    private final BackgroundQueue loadingTasks;
+    private final BackgroundQueue recordingsTasks;
+    private final FileRepository fileRepository;
+    private final LocalRepository localRepository;
+    private TrashContract.View view;
 
-	public TrashPresenter(BackgroundQueue loadingTasks, BackgroundQueue recordingsTasks,
-								 FileRepository fileRepository, LocalRepository localRepository) {
-		this.loadingTasks = loadingTasks;
-		this.recordingsTasks = recordingsTasks;
-		this.fileRepository = fileRepository;
-		this.localRepository = localRepository;
-	}
+    public TrashPresenter(BackgroundQueue loadingTasks, BackgroundQueue recordingsTasks,
+                          FileRepository fileRepository, LocalRepository localRepository)
+    {
+        this.loadingTasks = loadingTasks;
+        this.recordingsTasks = recordingsTasks;
+        this.fileRepository = fileRepository;
+        this.localRepository = localRepository;
+    }
 
-	@Override
-	public void bindView(final TrashContract.View v) {
-		this.view = v;
+    @Override
+    public void bindView(final TrashContract.View v)
+    {
+        this.view = v;
 
-		loadingTasks.postRunnable(() -> {
-			final List<RecordItem> list = Mapper.toRecordItemList(localRepository.getTrashRecords());
-			AndroidUtils.runOnUIThread(() -> {
-				if (view != null) {
-					if (list.isEmpty()) {
-						view.showEmpty();
-					} else {
-						view.showRecords(list);
-						view.hideEmpty();
-					}
-				}
-			});
-		});
-	}
+        loadingTasks.postRunnable(() ->
+        {
+            final List<RecordItem> list = Mapper.toRecordItemList(localRepository.getTrashRecords());
+            AndroidUtils.runOnUIThread(() ->
+            {
+                if (view != null)
+                {
+                    if (list.isEmpty())
+                    {
+                        view.showEmpty();
+                    }
+                    else
+                    {
+                        view.showRecords(list);
+                        view.hideEmpty();
+                    }
+                }
+            });
+        });
+    }
 
-	@Override
-	public void unbindView() {
-		this.view = null;
-	}
+    @Override
+    public void unbindView()
+    {
+        this.view = null;
+    }
 
-	@Override
-	public void clear() {
-		unbindView();
-	}
+    @Override
+    public void clear()
+    {
+        unbindView();
+    }
 
-	@Override
-	public void onRecordInfo(RecordInfo info) {
-		if (view != null) {
-			view.showRecordInfo(info);
-		}
-	}
+    @Override
+    public void onRecordInfo(RecordInfo info)
+    {
+        if (view != null)
+        {
+            view.showRecordInfo(info);
+        }
+    }
 
-	@Override
-	public void deleteRecordFromTrash(final int id, final String path) {
-		recordingsTasks.postRunnable(() -> {
-			if (fileRepository.deleteRecordFile(path)) {
-				removeFromTrash(id);
-			} else if (fileRepository.deleteRecordFile(path)) { //Try to delete again.
-				removeFromTrash(id);
-			} else {
-				AndroidUtils.runOnUIThread(() -> {
-					if (view != null) {
-						view.showMessage(R.string.error_failed_to_delete);
-					}
-				});
-			}
-		});
-	}
+    @Override
+    public void deleteRecordFromTrash(final int id, final String path)
+    {
+        recordingsTasks.postRunnable(() ->
+        {
+            if (fileRepository.deleteRecordFile(path))
+            {
+                removeFromTrash(id);
+            }
+            else if (fileRepository.deleteRecordFile(path))
+            { //Try to delete again.
+                removeFromTrash(id);
+            }
+            else
+            {
+                AndroidUtils.runOnUIThread(() ->
+                {
+                    if (view != null)
+                    {
+                        view.showMessage(R.string.error_failed_to_delete);
+                    }
+                });
+            }
+        });
+    }
 
-	private void removeFromTrash(final int id) {
-		localRepository.removeFromTrash(id);
-		AndroidUtils.runOnUIThread(() -> {
-			if (view != null) {
-				view.showMessage(R.string.record_deleted_successfully);
-				view.recordDeleted(id);
-			}
-		});
-	}
+    private void removeFromTrash(final int id)
+    {
+        localRepository.removeFromTrash(id);
+        AndroidUtils.runOnUIThread(() ->
+        {
+            if (view != null)
+            {
+                view.showMessage(R.string.record_deleted_successfully);
+                view.recordDeleted(id);
+            }
+        });
+    }
 
-	@Override
-	public void deleteAllRecordsFromTrash() {
-		recordingsTasks.postRunnable(() -> {
-			List<Record> records  = localRepository.getTrashRecords();
-			for (int i = 0; i < records.size(); i++) {
-				fileRepository.deleteRecordFile(records.get(i).getPath());
-			}
-			localRepository.emptyTrash();
-			AndroidUtils.runOnUIThread(() -> {
-				if (view != null) {
-					view.showMessage(R.string.all_records_deleted_successfully);
-					view.allRecordsRemoved();
-				}
-			});
-		});
-	}
+    @Override
+    public void deleteAllRecordsFromTrash()
+    {
+        recordingsTasks.postRunnable(() ->
+        {
+            List<Record> records = localRepository.getTrashRecords();
+            for (int i = 0; i < records.size(); i++)
+            {
+                fileRepository.deleteRecordFile(records.get(i).getPath());
+            }
+            localRepository.emptyTrash();
+            AndroidUtils.runOnUIThread(() ->
+            {
+                if (view != null)
+                {
+                    view.showMessage(R.string.all_records_deleted_successfully);
+                    view.allRecordsRemoved();
+                }
+            });
+        });
+    }
 
-	@Override
-	public void restoreRecordFromTrash(final int id) {
-		recordingsTasks.postRunnable(() -> {
-			try {
-				localRepository.restoreFromTrash(id);
-			} catch (final FailedToRestoreRecord e) {
-				AndroidUtils.runOnUIThread(() -> {
-					if (view != null) {
-						view.showMessage(ErrorParser.parseException(e));
-					}
-				});
-			}
-			AndroidUtils.runOnUIThread(() -> {
-				if (view != null) {
-					view.showMessage(R.string.record_restored_successfully);
-					view.recordRestored(id);
-				}
-			});
-		});
-	}
+    @Override
+    public void restoreRecordFromTrash(final int id)
+    {
+        recordingsTasks.postRunnable(() ->
+        {
+            try
+            {
+                localRepository.restoreFromTrash(id);
+            }
+            catch (final FailedToRestoreRecord e)
+            {
+                AndroidUtils.runOnUIThread(() ->
+                {
+                    if (view != null)
+                    {
+                        view.showMessage(ErrorParser.parseException(e));
+                    }
+                });
+            }
+            AndroidUtils.runOnUIThread(() ->
+            {
+                if (view != null)
+                {
+                    view.showMessage(R.string.record_restored_successfully);
+                    view.recordRestored(id);
+                }
+            });
+        });
+    }
 }

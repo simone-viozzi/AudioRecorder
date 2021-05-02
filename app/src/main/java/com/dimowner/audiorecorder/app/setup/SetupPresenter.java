@@ -22,235 +22,278 @@ import com.dimowner.audiorecorder.data.Prefs;
 
 import java.text.DecimalFormat;
 
-public class SetupPresenter implements SetupContract.UserActionsListener {
+public class SetupPresenter implements SetupContract.UserActionsListener
+{
 
-	private final DecimalFormat decimalFormat = new DecimalFormat("#.#");
+    private final DecimalFormat decimalFormat = new DecimalFormat("#.#");
+    private final Prefs prefs;
+    private SetupContract.View view;
 
-	private SetupContract.View view;
+    public SetupPresenter(Prefs prefs)
+    {
+        this.prefs = prefs;
+    }
 
-	private final Prefs prefs;
+    @Override
+    public void loadSettings()
+    {
+        if (view != null)
+        {
+            view.updateRecordingInfo(prefs.getSettingRecordingFormat());
+            view.showChannelCount(prefs.getSettingChannelCount());
+            String recordingFormatKey = prefs.getSettingRecordingFormat();
+            view.showRecordingFormat(recordingFormatKey);
+            updateRecordingFormat(recordingFormatKey);
+            view.showNamingFormat(prefs.getSettingNamingFormat());
+            view.showRecordingBitrate(prefs.getSettingBitrate());
+            view.showSampleRate(prefs.getSettingSampleRate());
+            updateSizePerMin();
+        }
+    }
 
-	public SetupPresenter(Prefs prefs) {
-		this.prefs = prefs;
-	}
+    @Override
+    public void setSettingRecordingBitrate(int bitrate)
+    {
+        prefs.setSettingBitrate(bitrate);
+        showBitrateInfo(bitrate);
+        updateSizePerMin();
+    }
 
-	@Override
-	public void loadSettings() {
-		if (view != null) {
-			view.updateRecordingInfo(prefs.getSettingRecordingFormat());
-			view.showChannelCount(prefs.getSettingChannelCount());
-			String recordingFormatKey = prefs.getSettingRecordingFormat();
-			view.showRecordingFormat(recordingFormatKey);
-			updateRecordingFormat(recordingFormatKey);
-			view.showNamingFormat(prefs.getSettingNamingFormat());
-			view.showRecordingBitrate(prefs.getSettingBitrate());
-			view.showSampleRate(prefs.getSettingSampleRate());
-			updateSizePerMin();
-		}
-	}
+    private void showBitrateInfo(int bitrate)
+    {
+        int text = -1;
+        switch (bitrate)
+        {
+            case AppConstants.RECORD_ENCODING_BITRATE_48000:
+                text = R.string.info_bitrate_48;
+                break;
+            case AppConstants.RECORD_ENCODING_BITRATE_96000:
+                text = R.string.info_bitrate_96;
+                break;
+            case AppConstants.RECORD_ENCODING_BITRATE_128000:
+                text = R.string.info_bitrate_128;
+                break;
+            case AppConstants.RECORD_ENCODING_BITRATE_192000:
+                text = R.string.info_bitrate_192;
+                break;
+            case AppConstants.RECORD_ENCODING_BITRATE_256000:
+                text = R.string.info_bitrate_256;
+                break;
+        }
+        if (view != null && text != -1)
+        {
+            view.showInformation(text);
+        }
+    }
 
-	@Override
-	public void setSettingRecordingBitrate(int bitrate) {
-		prefs.setSettingBitrate(bitrate);
-		showBitrateInfo(bitrate);
-		updateSizePerMin();
-	}
+    @Override
+    public void setSettingSampleRate(int rate)
+    {
+        prefs.setSettingSampleRate(rate);
+        showSampleRateInfo(rate);
+        updateSizePerMin();
+    }
 
-	private void showBitrateInfo(int bitrate) {
-		int text = -1;
-		switch (bitrate) {
-			case AppConstants.RECORD_ENCODING_BITRATE_48000:
-				text = R.string.info_bitrate_48;
-				break;
-			case AppConstants.RECORD_ENCODING_BITRATE_96000:
-				text = R.string.info_bitrate_96;
-				break;
-			case AppConstants.RECORD_ENCODING_BITRATE_128000:
-				text = R.string.info_bitrate_128;
-				break;
-			case AppConstants.RECORD_ENCODING_BITRATE_192000:
-				text = R.string.info_bitrate_192;
-				break;
-			case AppConstants.RECORD_ENCODING_BITRATE_256000:
-				text = R.string.info_bitrate_256;
-				break;
-		}
-		if (view != null && text != -1) {
-			view.showInformation(text);
-		}
-	}
+    private void showSampleRateInfo(int sampleRate)
+    {
+        int text = -1;
+        switch (sampleRate)
+        {
+            case AppConstants.RECORD_SAMPLE_RATE_8000:
+                text = R.string.info_sample_rate_8k;
+                break;
+            case AppConstants.RECORD_SAMPLE_RATE_16000:
+                text = R.string.info_sample_rate_16k;
+                break;
+            case AppConstants.RECORD_SAMPLE_RATE_22050:
+                text = R.string.info_sample_rate_22k;
+                break;
+            case AppConstants.RECORD_SAMPLE_RATE_32000:
+                text = R.string.info_sample_rate_32k;
+                break;
+            case AppConstants.RECORD_SAMPLE_RATE_44100:
+                text = R.string.info_sample_rate_44k;
+                break;
+            case AppConstants.RECORD_SAMPLE_RATE_48000:
+                text = R.string.info_sample_rate_48k;
+                break;
+        }
+        if (view != null && text != -1)
+        {
+            view.showInformation(text);
+        }
+    }
 
-	@Override
-	public void setSettingSampleRate(int rate) {
-		prefs.setSettingSampleRate(rate);
-		showSampleRateInfo(rate);
-		updateSizePerMin();
-	}
+    @Override
+    public void setSettingChannelCount(int count)
+    {
+        prefs.setSettingChannelCount(count);
+        if (view != null)
+        {
+            view.showInformation(R.string.info_channels);
+        }
+        updateSizePerMin();
+        switch (count)
+        {
+            case AppConstants.RECORD_AUDIO_STEREO:
+                if (view != null)
+                {
+                    view.showInformation(R.string.info_stereo);
+                }
+                break;
+            case AppConstants.RECORD_AUDIO_MONO:
+                if (view != null)
+                {
+                    view.showInformation(R.string.info_mono);
+                }
+                break;
+        }
+    }
 
-	private void showSampleRateInfo(int sampleRate) {
-		int text = -1;
-		switch (sampleRate) {
-			case AppConstants.RECORD_SAMPLE_RATE_8000:
-				text = R.string.info_sample_rate_8k;
-				break;
-			case AppConstants.RECORD_SAMPLE_RATE_16000:
-				text = R.string.info_sample_rate_16k;
-				break;
-			case AppConstants.RECORD_SAMPLE_RATE_22050:
-				text = R.string.info_sample_rate_22k;
-				break;
-			case AppConstants.RECORD_SAMPLE_RATE_32000:
-				text = R.string.info_sample_rate_32k;
-				break;
-			case AppConstants.RECORD_SAMPLE_RATE_44100:
-				text = R.string.info_sample_rate_44k;
-				break;
-			case AppConstants.RECORD_SAMPLE_RATE_48000:
-				text = R.string.info_sample_rate_48k;
-				break;
-		}
-		if (view != null && text != -1) {
-			view.showInformation(text);
-		}
-	}
+    @Override
+    public void setSettingThemeColor(String colorKey)
+    {
+        prefs.setSettingThemeColor(colorKey);
+    }
 
-	@Override
-	public void setSettingChannelCount(int count) {
-		prefs.setSettingChannelCount(count);
-		if (view != null) {
-			view.showInformation(R.string.info_channels);
-		}
-		updateSizePerMin();
-		switch (count) {
-			case AppConstants.RECORD_AUDIO_STEREO:
-				if (view != null) {
-					view.showInformation(R.string.info_stereo);
-				}
-				break;
-			case AppConstants.RECORD_AUDIO_MONO:
-				if (view != null) {
-					view.showInformation(R.string.info_mono);
-				}
-				break;
-		}
-	}
+    @Override
+    public void setSettingNamingFormat(String namingKey)
+    {
+        prefs.setSettingNamingFormat(namingKey);
+    }
 
-	@Override
-	public void setSettingThemeColor(String colorKey) {
-		prefs.setSettingThemeColor(colorKey);
-	}
+    @Override
+    public void setSettingRecordingFormat(String formatKey)
+    {
+        prefs.setSettingRecordingFormat(formatKey);
+        updateRecordingFormat(formatKey);
+        switch (formatKey)
+        {
+            case AppConstants.FORMAT_WAV:
+                if (view != null)
+                {
+                    view.showInformation(R.string.info_wav);
+                }
+                break;
+            case AppConstants.FORMAT_M4A:
+                if (view != null)
+                {
+                    view.showInformation(R.string.info_m4a);
+                }
+                break;
+            case AppConstants.FORMAT_3GP:
+                if (view != null)
+                {
+                    view.showInformation(R.string.info_3gp);
+                }
+                break;
+        }
+        if (view != null)
+        {
+            view.updateRecordingInfo(formatKey);
+        }
+        updateSizePerMin();
+    }
 
-	@Override
-	public void setSettingNamingFormat(String namingKey) {
-		prefs.setSettingNamingFormat(namingKey);
-	}
+    @Override
+    public void executeFirstRun()
+    {
+        if (prefs.isFirstRun())
+        {
+            prefs.firstRunExecuted();
+        }
+    }
 
-	@Override
-	public void setSettingRecordingFormat(String formatKey) {
-		prefs.setSettingRecordingFormat(formatKey);
-		updateRecordingFormat(formatKey);
-		switch (formatKey) {
-			case AppConstants.FORMAT_WAV:
-				if (view != null) {
-					view.showInformation(R.string.info_wav);
-				}
-				break;
-			case AppConstants.FORMAT_M4A:
-				if (view != null) {
-					view.showInformation(R.string.info_m4a);
-				}
-				break;
-			case AppConstants.FORMAT_3GP:
-				if (view != null) {
-					view.showInformation(R.string.info_3gp);
-				}
-				break;
-		}
-		if (view != null) {
-			view.updateRecordingInfo(formatKey);
-		}
-		updateSizePerMin();
-	}
+    @Override
+    public void resetSettings()
+    {
+        prefs.resetSettings();
+    }
 
-	@Override
-	public void executeFirstRun() {
-		if (prefs.isFirstRun()) {
-			prefs.firstRunExecuted();
-		}
-	}
+    @Override
+    public void bindView(SetupContract.View view)
+    {
+        this.view = view;
+    }
 
-	@Override
-	public void resetSettings() {
-		prefs.resetSettings();
-	}
+    @Override
+    public void unbindView()
+    {
+        if (view != null)
+        {
+            this.view = null;
+        }
+    }
 
-	@Override
-	public void bindView(SetupContract.View view) {
-		this.view = view;
-	}
+    @Override
+    public void clear()
+    {
+        if (view != null)
+        {
+            unbindView();
+        }
+    }
 
-	@Override
-	public void unbindView() {
-		if (view != null) {
-			this.view = null;
-		}
-	}
+    private void updateRecordingFormat(String formatKey)
+    {
+        switch (formatKey)
+        {
+            case AppConstants.FORMAT_3GP:
+            case AppConstants.FORMAT_WAV:
+                if (view != null)
+                {
+                    view.hideBitrateSelector();
+                    view.showInformation(R.string.info_wav);
+                }
+                break;
+            case AppConstants.FORMAT_M4A:
+                if (view != null)
+                {
+                    view.showInformation(R.string.info_m4a);
+                }
+            default:
+                if (view != null)
+                {
+                    view.showBitrateSelector();
+                }
+        }
+    }
 
-	@Override
-	public void clear() {
-		if (view != null) {
-			unbindView();
-		}
-	}
+    private void updateSizePerMin()
+    {
+        String format = prefs.getSettingRecordingFormat();
+        int sampleRate = prefs.getSettingSampleRate();
+        if (format.equals(AppConstants.FORMAT_3GP))
+        {
+            view.showSizePerMin(
+                    decimalFormat.format(
+                            sizePerMin(format, sampleRate, AppConstants.RECORD_ENCODING_BITRATE_12000,
+                                    AppConstants.RECORD_AUDIO_MONO) / 1000000f
+                    )
+            );
+        }
+        else
+        {
+            int bitrate = prefs.getSettingBitrate();
+            int channelsCount = prefs.getSettingChannelCount();
+            if (view != null)
+            {
+                view.showSizePerMin(decimalFormat.format(sizePerMin(format, sampleRate, bitrate, channelsCount) / 1000000f));
+            }
+        }
+    }
 
-	private void updateRecordingFormat(String formatKey) {
-		switch (formatKey) {
-			case AppConstants.FORMAT_3GP:
-			case AppConstants.FORMAT_WAV:
-				if (view != null) {
-					view.hideBitrateSelector();
-					view.showInformation(R.string.info_wav);
-				}
-				break;
-			case AppConstants.FORMAT_M4A:
-				if (view != null) {
-					view.showInformation(R.string.info_m4a);
-				}
-			default:
-				if (view != null) {
-					view.showBitrateSelector();
-				}
-		}
-	}
-
-	private void updateSizePerMin() {
-		String format = prefs.getSettingRecordingFormat();
-		int sampleRate = prefs.getSettingSampleRate();
-		if (format.equals(AppConstants.FORMAT_3GP)) {
-			view.showSizePerMin(
-					decimalFormat.format(
-							sizePerMin(format, sampleRate, AppConstants.RECORD_ENCODING_BITRATE_12000,
-									AppConstants.RECORD_AUDIO_MONO) / 1000000f
-					)
-			);
-		} else {
-			int bitrate = prefs.getSettingBitrate();
-			int channelsCount = prefs.getSettingChannelCount();
-			if (view != null) {
-				view.showSizePerMin(decimalFormat.format(sizePerMin(format, sampleRate, bitrate, channelsCount) / 1000000f));
-			}
-		}
-	}
-
-	private long sizePerMin(String recordingFormat, int sampleRate, int bitrate, int channels) {
-		switch (recordingFormat) {
-			case AppConstants.FORMAT_M4A:
-			case AppConstants.FORMAT_3GP:
-				return 60 * (bitrate/8);
-			case AppConstants.FORMAT_WAV:
-				return 60 * (sampleRate * channels * 2);
-			default:
-				return 0;
-		}
-	}
+    private long sizePerMin(String recordingFormat, int sampleRate, int bitrate, int channels)
+    {
+        switch (recordingFormat)
+        {
+            case AppConstants.FORMAT_M4A:
+            case AppConstants.FORMAT_3GP:
+                return 60 * (bitrate / 8);
+            case AppConstants.FORMAT_WAV:
+                return 60 * (sampleRate * channels * 2);
+            default:
+                return 0;
+        }
+    }
 }

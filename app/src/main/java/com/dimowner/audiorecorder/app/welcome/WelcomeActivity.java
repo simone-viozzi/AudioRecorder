@@ -24,71 +24,74 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.Toast;
-
-import com.dimowner.audiorecorder.ARApplication;
-import com.dimowner.audiorecorder.R;
-import com.dimowner.audiorecorder.app.InkPageIndicator;
-import com.dimowner.audiorecorder.app.setup.SetupActivity;
-import com.dimowner.audiorecorder.util.AndroidUtils;
 
 import androidx.annotation.Nullable;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.dimowner.audiorecorder.ARApplication;
+import com.dimowner.audiorecorder.R;
+import com.dimowner.audiorecorder.app.setup.SetupActivity;
+import com.dimowner.audiorecorder.util.AndroidUtils;
+
 /**
  * Created on 04.04.2020.
+ *
  * @author Dimowner
  */
-public class WelcomeActivity extends Activity implements WelcomeContract.View {
+public class WelcomeActivity extends Activity implements WelcomeContract.View
+{
 
 //	private ViewPagerPager pagerPager;
 
-	private WelcomePagerAdapter adapter;
+    private WelcomePagerAdapter adapter;
 
-//	private ImageView itemImageFirst;
+    //	private ImageView itemImageFirst;
 //	private ImageView itemImageSecond;
-	private Button actionButton;
+    private Button actionButton;
 
-	private ViewPager2 pager;
+    private ViewPager2 pager;
 //	private InkPageIndicator pageIndicator;
 //	private ViewPager2.OnPageChangeCallback onPageChangeCallback;
 
-	public static Intent getStartIntent(Context context) {
-		return new Intent(context, WelcomeActivity.class);
-	}
+    public static Intent getStartIntent(Context context)
+    {
+        return new Intent(context, WelcomeActivity.class);
+    }
 
-	@Override
-	protected void onCreate(@Nullable Bundle savedInstanceState) {
-		setTheme(ARApplication.getInjector().provideColorMap().getAppThemeResource());
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_welcome);
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState)
+    {
+        setTheme(ARApplication.getInjector().provideColorMap().getAppThemeResource());
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_welcome);
 
-		getWindow().setFlags(
-				WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-				WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+        getWindow().setFlags(
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
 
-		actionButton = findViewById(R.id.btn_action);
-		actionButton.setOnClickListener(v -> {
+        actionButton = findViewById(R.id.btn_action);
+        actionButton.setOnClickListener(v ->
+        {
 //				if (pager.getCurrentItem() == adapter.getItemCount() - 1) {
-				startActivity(SetupActivity.getStartIntent(getApplicationContext()));
-				finish();
+            startActivity(SetupActivity.getStartIntent(getApplicationContext()));
+            finish();
 //				} else {
 //					pagerPager.advance();
 //				}
-		});
+        });
 
-		View space = findViewById(R.id.navigation_height);
-		final ViewGroup.LayoutParams params = space.getLayoutParams();
-		params.height = AndroidUtils.getNavigationBarHeight(getApplicationContext());
-		space.setLayoutParams(params);
+        View space = findViewById(R.id.navigation_height);
+        final ViewGroup.LayoutParams params = space.getLayoutParams();
+        params.height = AndroidUtils.getNavigationBarHeight(getApplicationContext());
+        space.setLayoutParams(params);
 
 //		itemImageFirst = findViewById(R.id.item_image_first);
 //		itemImageSecond = findViewById(R.id.item_image_second);
-		pager = findViewById(R.id.pager);
+        pager = findViewById(R.id.pager);
 //		pageIndicator = findViewById(R.id.pageIndicator);
-		adapter = new WelcomePagerAdapter();
-		pager.setAdapter(adapter);
+        adapter = new WelcomePagerAdapter();
+        pager.setAdapter(adapter);
 //		pagerPager = new ViewPagerPager(pager);
 //		pageIndicator.setViewPager(pager);
 //		final int width = AndroidUtils.getScreenWidth(getApplicationContext());
@@ -133,42 +136,49 @@ public class WelcomeActivity extends Activity implements WelcomeContract.View {
 //			}
 //		};
 //		pager.registerOnPageChangeCallback(onPageChangeCallback);
-	}
+    }
 
-	@Override
-	protected void onStart() {
-		super.onStart();
+    @Override
+    protected void onStart()
+    {
+        super.onStart();
 //		pagerPager.startTimer();
-	}
+    }
 
-	@Override
-	protected void onStop() {
-		super.onStop();
+    @Override
+    protected void onStop()
+    {
+        super.onStop();
 //		pagerPager.stopTimer();
-	}
+    }
 
-	@Override
-	public void showProgress() {
+    @Override
+    public void showProgress()
+    {
 
-	}
+    }
 
-	@Override
-	public void hideProgress() {
+    @Override
+    public void hideProgress()
+    {
 
-	}
+    }
 
-	@Override
-	public void showError(String message) {
-		Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
-	}
+    @Override
+    public void showError(String message)
+    {
+        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
+    }
 
-	@Override
-	public void showError(int resId) {
-		Toast.makeText(getApplicationContext(), resId, Toast.LENGTH_LONG).show();
-	}
+    @Override
+    public void showError(int resId)
+    {
+        Toast.makeText(getApplicationContext(), resId, Toast.LENGTH_LONG).show();
+    }
 
-	@Override
-	public void showMessage(int resId) {
-		Toast.makeText(getApplicationContext(), resId, Toast.LENGTH_LONG).show();
-	}
+    @Override
+    public void showMessage(int resId)
+    {
+        Toast.makeText(getApplicationContext(), resId, Toast.LENGTH_LONG).show();
+    }
 }

@@ -35,289 +35,378 @@ import static com.dimowner.audiorecorder.AppConstants.PLAYBACK_VISUALIZATION_INT
 
 /**
  * @deprecated use {@link AudioPlayerNew}
- * */
-public class AudioPlayer implements PlayerContract.Player, MediaPlayer.OnPreparedListener {
+ */
+public class AudioPlayer implements PlayerContract.Player, MediaPlayer.OnPreparedListener
+{
 
-	private final List<PlayerContract.PlayerCallback> actionsListeners = new ArrayList<>();
+    private final List<PlayerContract.PlayerCallback> actionsListeners = new ArrayList<>();
+    private final Handler handler = new Handler();
+    private MediaPlayer mediaPlayer;
+    private boolean isPrepared = false;
+    private boolean isPause = false;
+    private long seekPos = 0;
+    private long pausePos = 0;
+    private String dataSource = null;
 
-	private MediaPlayer mediaPlayer;
-	private boolean isPrepared = false;
-	private boolean isPause = false;
-	private long seekPos = 0;
-	private long pausePos = 0;
-	private String dataSource = null;
-	private final Handler handler = new Handler();
 
+    private AudioPlayer()
+    {
+    }
 
-	private static class SingletonHolder {
-		private static final AudioPlayer singleton = new AudioPlayer();
+    public static AudioPlayer getInstance()
+    {
+        return SingletonHolder.getSingleton();
+    }
 
-		public static AudioPlayer getSingleton() {
-			return SingletonHolder.singleton;
-		}
-	}
+    @Override
+    public void addPlayerCallback(PlayerContract.PlayerCallback callback)
+    {
+        if (callback != null)
+        {
+            actionsListeners.add(callback);
+        }
+    }
 
-	public static AudioPlayer getInstance() {
-		return SingletonHolder.getSingleton();
-	}
+    @Override
+    public boolean removePlayerCallback(PlayerContract.PlayerCallback callback)
+    {
+        if (callback != null)
+        {
+            return actionsListeners.remove(callback);
+        }
+        return false;
+    }
 
-	private AudioPlayer() {}
+    @Override
+    public void setData(String data)
+    {
+        if (mediaPlayer != null && dataSource != null && dataSource.equals(data))
+        {
+            //Do nothing
+        }
+        else
+        {
+            dataSource = data;
+            restartPlayer();
+        }
+    }
 
-	@Override
-	public void addPlayerCallback(PlayerContract.PlayerCallback callback) {
-		if (callback != null) {
-			actionsListeners.add(callback);
-		}
-	}
+    private void restartPlayer()
+    {
+        if (dataSource != null)
+        {
+            try
+            {
+                isPrepared = false;
+                mediaPlayer = new MediaPlayer();
+                mediaPlayer.setDataSource(dataSource);
+                mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+            }
+            catch (IOException | IllegalArgumentException | IllegalStateException | SecurityException e)
+            {
+                Timber.e(e);
+                if (e.getMessage() != null && e.getMessage().contains("Permission denied"))
+                {
+                    onError(new PermissionDeniedException());
+                }
+                else
+                {
+                    onError(new PlayerDataSourceException());
+                }
+            }
+        }
+    }
 
-	@Override
-	public boolean removePlayerCallback(PlayerContract.PlayerCallback callback) {
-		if (callback != null) {
-			return actionsListeners.remove(callback);
-		}
-		return false;
-	}
+    @Override
+    public void playOrPause()
+    {
+        try
+        {
+            if (mediaPlayer != null)
+            {
+                if (mediaPlayer.isPlaying())
+                {
+                    pause();
+                }
+                else
+                {
+                    isPause = false;
+                    if (!isPrepared)
+                    {
+                        try
+                        {
+                            mediaPlayer.setOnPreparedListener(this);
+                            mediaPlayer.prepareAsync();
+                        }
+                        catch (IllegalStateException ex)
+                        {
+                            Timber.e(ex);
+                            restartPlayer();
+                            mediaPlayer.setOnPreparedListener(this);
+                            try
+                            {
+                                mediaPlayer.prepareAsync();
+                            }
+                            catch (IllegalStateException e)
+                            {
+                                Timber.e(e);
+                                restartPlayer();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        mediaPlayer.start();
+                        mediaPlayer.seekTo((int) pausePos);
+                        onStartPlay();
+                        mediaPlayer.setOnCompletionListener(mp ->
+                        {
+                            stop();
+                            onStopPlay();
+                        });
 
-	@Override
-	public void setData(String data) {
-		if (mediaPlayer != null && dataSource != null && dataSource.equals(data)) {
-			//Do nothing
-		} else {
-			dataSource = data;
-			restartPlayer();
-		}
-	}
+                        schedulePlaybackTimeUpdate();
+                    }
+                    pausePos = 0;
+                }
+            }
+        }
+        catch (IllegalStateException e)
+        {
+            Timber.e(e, "Player is not initialized!");
+        }
+    }
 
-	private void restartPlayer() {
-		if (dataSource != null) {
-			try {
-				isPrepared = false;
-				mediaPlayer = new MediaPlayer();
-				mediaPlayer.setDataSource(dataSource);
-				mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-			} catch (IOException | IllegalArgumentException | IllegalStateException | SecurityException e) {
-				Timber.e(e);
-				if (e.getMessage() != null && e.getMessage().contains("Permission denied")) {
-					onError(new PermissionDeniedException());
-				} else {
-					onError(new PlayerDataSourceException());
-				}
-			}
-		}
-	}
+    @Override
+    public void onPrepared(final MediaPlayer mp)
+    {
+        if (mediaPlayer != mp)
+        {
+            mediaPlayer.stop();
+            mediaPlayer.release();
+            mediaPlayer = mp;
+        }
+        onPreparePlay();
+        isPrepared = true;
+        mediaPlayer.start();
+        mediaPlayer.seekTo((int) seekPos);
+        onStartPlay();
+        mediaPlayer.setOnCompletionListener(mp1 ->
+        {
+            stop();
+            onStopPlay();
+        });
 
-	@Override
-	public void playOrPause() {
-		try {
-			if (mediaPlayer != null) {
-				if (mediaPlayer.isPlaying()) {
-					pause();
-				} else {
-					isPause = false;
-					if (!isPrepared) {
-						try {
-							mediaPlayer.setOnPreparedListener(this);
-							mediaPlayer.prepareAsync();
-						} catch (IllegalStateException ex) {
-							Timber.e(ex);
-							restartPlayer();
-							mediaPlayer.setOnPreparedListener(this);
-							try {
-								mediaPlayer.prepareAsync();
-							} catch (IllegalStateException e) {
-								Timber.e(e);
-								restartPlayer();
-							}
-						}
-					} else {
-						mediaPlayer.start();
-						mediaPlayer.seekTo((int) pausePos);
-						onStartPlay();
-						mediaPlayer.setOnCompletionListener(mp -> {
-							stop();
-							onStopPlay();
-						});
+        schedulePlaybackTimeUpdate();
+    }
 
-						schedulePlaybackTimeUpdate();
-					}
-					pausePos = 0;
-				}
-			}
-		} catch(IllegalStateException e){
-			Timber.e(e, "Player is not initialized!");
-		}
-	}
+    @Override
+    public void seek(long mills)
+    {
+        seekPos = mills;
+        if (isPause)
+        {
+            pausePos = mills;
+        }
+        try
+        {
+            if (mediaPlayer != null && mediaPlayer.isPlaying())
+            {
+                mediaPlayer.seekTo((int) seekPos);
+                onSeek((int) seekPos);
+            }
+        }
+        catch (IllegalStateException e)
+        {
+            Timber.e(e, "Player is not initialized!");
+        }
+    }
 
-	@Override
-	public void onPrepared(final MediaPlayer mp) {
-		if (mediaPlayer != mp) {
-			mediaPlayer.stop();
-			mediaPlayer.release();
-			mediaPlayer = mp;
-		}
-		onPreparePlay();
-		isPrepared = true;
-		mediaPlayer.start();
-		mediaPlayer.seekTo((int) seekPos);
-		onStartPlay();
-		mediaPlayer.setOnCompletionListener(mp1 -> {
-			stop();
-			onStopPlay();
-		});
+    @Override
+    public void pause()
+    {
+        stopPlaybackTimeUpdate();
+        if (mediaPlayer != null)
+        {
+            if (mediaPlayer.isPlaying())
+            {
+                mediaPlayer.pause();
+                onPausePlay();
+                seekPos = mediaPlayer.getCurrentPosition();
+                isPause = true;
+                pausePos = seekPos;
+            }
+        }
+    }
 
-		schedulePlaybackTimeUpdate();
-	}
+    @Override
+    public void stop()
+    {
+        stopPlaybackTimeUpdate();
+        if (mediaPlayer != null)
+        {
+            mediaPlayer.stop();
+            mediaPlayer.setOnCompletionListener(null);
+            isPrepared = false;
+            onStopPlay();
+            mediaPlayer.getCurrentPosition();
+            seekPos = 0;
+        }
+        isPause = false;
+        pausePos = 0;
+    }
 
-	@Override
-	public void seek(long mills) {
-		seekPos = mills;
-		if (isPause) {
-			pausePos = mills;
-		}
-		try {
-			if (mediaPlayer != null && mediaPlayer.isPlaying()) {
-				mediaPlayer.seekTo((int) seekPos);
-				onSeek((int) seekPos);
-			}
-		} catch(IllegalStateException e){
-			Timber.e(e, "Player is not initialized!");
-		}
-	}
+    @Override
+    public boolean isPlaying()
+    {
+        try
+        {
+            return mediaPlayer != null && mediaPlayer.isPlaying();
+        }
+        catch (IllegalStateException e)
+        {
+            Timber.e(e, "Player is not initialized!");
+        }
+        return false;
+    }
 
-	@Override
-	public void pause() {
-		stopPlaybackTimeUpdate();
-		if (mediaPlayer != null) {
-			if (mediaPlayer.isPlaying()) {
-				mediaPlayer.pause();
-				onPausePlay();
-				seekPos = mediaPlayer.getCurrentPosition();
-				isPause = true;
-				pausePos = seekPos;
-			}
-		}
-	}
+    @Override
+    public boolean isPause()
+    {
+        return isPause;
+    }
 
-	@Override
-	public void stop() {
-		stopPlaybackTimeUpdate();
-		if (mediaPlayer != null) {
-			mediaPlayer.stop();
-			mediaPlayer.setOnCompletionListener(null);
-			isPrepared = false;
-			onStopPlay();
-			mediaPlayer.getCurrentPosition();
-			seekPos = 0;
-		}
-		isPause = false;
-		pausePos = 0;
-	}
+    @Override
+    public long getPauseTime()
+    {
+        return seekPos;
+    }
 
-	@Override
-	public boolean isPlaying() {
-		try {
-			return mediaPlayer != null && mediaPlayer.isPlaying();
-		} catch(IllegalStateException e){
-			Timber.e(e, "Player is not initialized!");
-		}
-		return false;
-	}
+    @Override
+    public void release()
+    {
+        stop();
+        if (mediaPlayer != null)
+        {
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
+        isPrepared = false;
+        isPause = false;
+        dataSource = null;
+        actionsListeners.clear();
+    }
 
-	@Override
-	public boolean isPause() {
-		return isPause;
-	}
+    private void schedulePlaybackTimeUpdate()
+    {
+        handler.postDelayed(() ->
+        {
+            try
+            {
+                if (mediaPlayer != null && mediaPlayer.isPlaying())
+                {
+                    int curPos = mediaPlayer.getCurrentPosition();
+                    onPlayProgress(curPos);
+                }
+                schedulePlaybackTimeUpdate();
+            }
+            catch (IllegalStateException e)
+            {
+                Timber.e(e, "Player is not initialized!");
+                onError(new PlayerInitException());
+            }
+        }, PLAYBACK_VISUALIZATION_INTERVAL);
+    }
 
-	@Override
-	public long getPauseTime() {
-		return seekPos;
-	}
+    private void stopPlaybackTimeUpdate()
+    {
+        handler.removeCallbacksAndMessages(null);
+    }
 
-	@Override
-	public void release() {
-		stop();
-		if (mediaPlayer != null) {
-			mediaPlayer.release();
-			mediaPlayer = null;
-		}
-		isPrepared = false;
-		isPause = false;
-		dataSource = null;
-		actionsListeners.clear();
-	}
+    private void onPreparePlay()
+    {
+        if (!actionsListeners.isEmpty())
+        {
+            for (int i = 0; i < actionsListeners.size(); i++)
+            {
+                actionsListeners.get(i).onPreparePlay();
+            }
+        }
+    }
 
-	private void schedulePlaybackTimeUpdate() {
-		handler.postDelayed(() -> {
-			try {
-				if (mediaPlayer != null && mediaPlayer.isPlaying()) {
-					int curPos = mediaPlayer.getCurrentPosition();
-					onPlayProgress(curPos);
-				}
-				schedulePlaybackTimeUpdate();
-			} catch(IllegalStateException e){
-				Timber.e(e, "Player is not initialized!");
-				onError(new PlayerInitException());
-			}
-		}, PLAYBACK_VISUALIZATION_INTERVAL);
-	}
+    private void onStartPlay()
+    {
+        if (!actionsListeners.isEmpty())
+        {
+            for (int i = 0; i < actionsListeners.size(); i++)
+            {
+                actionsListeners.get(i).onStartPlay();
+            }
+        }
+    }
 
-	private void stopPlaybackTimeUpdate() {
-		handler.removeCallbacksAndMessages(null);
-	}
+    private void onPlayProgress(long mills)
+    {
+        if (!actionsListeners.isEmpty())
+        {
+            for (int i = 0; i < actionsListeners.size(); i++)
+            {
+                actionsListeners.get(i).onPlayProgress(mills);
+            }
+        }
+    }
 
-	private void onPreparePlay() {
-		if (!actionsListeners.isEmpty()) {
-			for (int i = 0; i < actionsListeners.size(); i++) {
-				actionsListeners.get(i).onPreparePlay();
-			}
-		}
-	}
+    private void onStopPlay()
+    {
+        if (!actionsListeners.isEmpty())
+        {
+            for (int i = actionsListeners.size() - 1; i >= 0; i--)
+            {
+                actionsListeners.get(i).onStopPlay();
+            }
+        }
+    }
 
-	private  void onStartPlay() {
-		if (!actionsListeners.isEmpty()) {
-			for (int i = 0; i < actionsListeners.size(); i++) {
-				actionsListeners.get(i).onStartPlay();
-			}
-		}
-	}
+    private void onPausePlay()
+    {
+        if (!actionsListeners.isEmpty())
+        {
+            for (int i = 0; i < actionsListeners.size(); i++)
+            {
+                actionsListeners.get(i).onPausePlay();
+            }
+        }
+    }
 
-	private void onPlayProgress(long mills) {
-		if (!actionsListeners.isEmpty()) {
-			for (int i = 0; i < actionsListeners.size(); i++) {
-				actionsListeners.get(i).onPlayProgress(mills);
-			}
-		}
-	}
+    private void onSeek(long mills)
+    {
+        if (!actionsListeners.isEmpty())
+        {
+            for (int i = 0; i < actionsListeners.size(); i++)
+            {
+                actionsListeners.get(i).onSeek(mills);
+            }
+        }
+    }
 
-	private void onStopPlay() {
-		if (!actionsListeners.isEmpty()) {
-			for (int i = actionsListeners.size()-1; i >= 0; i--) {
-				actionsListeners.get(i).onStopPlay();
-			}
-		}
-	}
+    private void onError(AppException throwable)
+    {
+        if (!actionsListeners.isEmpty())
+        {
+            for (int i = 0; i < actionsListeners.size(); i++)
+            {
+                actionsListeners.get(i).onError(throwable);
+            }
+        }
+    }
 
-	private void onPausePlay() {
-		if (!actionsListeners.isEmpty()) {
-			for (int i = 0; i < actionsListeners.size(); i++) {
-				actionsListeners.get(i).onPausePlay();
-			}
-		}
-	}
+    private static class SingletonHolder
+    {
+        private static final AudioPlayer singleton = new AudioPlayer();
 
-	private void onSeek(long mills) {
-		if (!actionsListeners.isEmpty()) {
-			for (int i = 0; i < actionsListeners.size(); i++) {
-				actionsListeners.get(i).onSeek(mills);
-			}
-		}
-	}
-
-	private void onError(AppException throwable) {
-		if (!actionsListeners.isEmpty()) {
-			for (int i = 0; i < actionsListeners.size(); i++) {
-				actionsListeners.get(i).onError(throwable);
-			}
-		}
-	}
+        public static AudioPlayer getSingleton()
+        {
+            return SingletonHolder.singleton;
+        }
+    }
 }

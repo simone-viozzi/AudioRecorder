@@ -25,128 +25,147 @@ import android.view.View;
 import com.dimowner.audiorecorder.R;
 import com.dimowner.audiorecorder.util.AndroidUtils;
 
-public class SimpleWaveformView extends View {
+public class SimpleWaveformView extends View
+{
 
-	private static int waveformColorRes;
+    private static int waveformColorRes;
+    private final int[] empty = new int[0];
+    private Paint waveformPaint;
+    private int[] waveformData;
+    private int[] waveForm;
+    private boolean isInitialized;
+    /**
+     * Values used to prevent call {@link #adjustWaveformHeights} before view is measured because
+     * in that method used measured height value which calculates in {@link #onMeasure(int, int)}
+     */
+    private boolean isMeasured = false;
 
-	private Paint waveformPaint;
+    public SimpleWaveformView(Context context)
+    {
+        super(context);
+        init(context);
+    }
 
-	private int[] waveformData;
+    public SimpleWaveformView(Context context, AttributeSet attrs)
+    {
+        super(context, attrs);
+        init(context);
+    }
 
-	private int[] waveForm;
+    public SimpleWaveformView(Context context, AttributeSet attrs, int defStyleAttr)
+    {
+        super(context, attrs, defStyleAttr);
+        init(context);
+    }
 
-	private boolean isInitialized;
+    public static void setWaveformColorRes(int waveformColorRes)
+    {
+        SimpleWaveformView.waveformColorRes = waveformColorRes;
+    }
 
-	private final int[] empty = new int[0];
+    private void init(Context context)
+    {
 
-	/**
-	 * Values used to prevent call {@link #adjustWaveformHeights} before view is measured because
-	 * in that method used measured height value which calculates in {@link #onMeasure(int, int)}
-	 */
-	private boolean isMeasured = false;
+        setFocusable(false);
 
-	public SimpleWaveformView(Context context) {
-		super(context);
-		init(context);
-	}
+        waveformPaint = new Paint();
+        waveformPaint.setStyle(Paint.Style.STROKE);
+        waveformPaint.setStrokeWidth(AndroidUtils.dpToPx(1));
+        waveformPaint.setStrokeJoin(Paint.Join.ROUND);
+        waveformPaint.setAntiAlias(true);
+        waveformPaint.setColor(context.getResources().getColor(waveformColorRes));
 
-	public SimpleWaveformView(Context context, AttributeSet attrs) {
-		super(context, attrs);
-		init(context);
-	}
+        waveForm = null;
+        isInitialized = false;
+    }
 
-	public SimpleWaveformView(Context context, AttributeSet attrs, int defStyleAttr) {
-		super(context, attrs, defStyleAttr);
-		init(context);
-	}
+    public void setWaveform(int[] frameGains)
+    {
+        if (frameGains != null)
+        {
+            this.waveForm = frameGains;
+            this.waveformData = frameGains;
+            if (isMeasured)
+            {
+                adjustWaveformHeights(waveForm);
+            }
+        }
+        else
+        {
+            if (isMeasured)
+            {
+                adjustWaveformHeights(empty);
+            }
+        }
+        requestLayout();
+    }
 
+    @Override
+    public void setSelected(boolean selected)
+    {
+        super.setSelected(selected);
+        if (selected)
+        {
+            waveformPaint.setColor(getContext().getResources().getColor(R.color.md_grey_500));
+        }
+        else
+        {
+            waveformPaint.setColor(getContext().getResources().getColor(R.color.md_grey_700));
+        }
+    }
 
-	private void init(Context context) {
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
+    {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
-		setFocusable(false);
+        if (!isMeasured) isMeasured = true;
+        // Reconcile the measured dimensions with the this view's constraints and
+        // set the final measured width and height.
+        int width = MeasureSpec.getSize(widthMeasureSpec);
 
-		waveformPaint = new Paint();
-		waveformPaint.setStyle(Paint.Style.STROKE);
-		waveformPaint.setStrokeWidth(AndroidUtils.dpToPx(1));
-		waveformPaint.setStrokeJoin(Paint.Join.ROUND);
-		waveformPaint.setAntiAlias(true);
-		waveformPaint.setColor(context.getResources().getColor(waveformColorRes));
+        setMeasuredDimension(
+                resolveSize(width, widthMeasureSpec),
+                heightMeasureSpec);
+    }
 
-		waveForm = null;
-		isInitialized = false;
-	}
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom)
+    {
+        super.onLayout(changed, left, top, right, bottom);
+        if (isMeasured && !isInitialized)
+        {
+            if (waveForm != null)
+            {
+                adjustWaveformHeights(waveForm);
+            }
+            else
+            {
+                adjustWaveformHeights(empty);
+            }
+        }
+    }
 
-	public static void setWaveformColorRes(int waveformColorRes) {
-		SimpleWaveformView.waveformColorRes = waveformColorRes;
-	}
+    @Override
+    protected void onDraw(Canvas canvas)
+    {
+        super.onDraw(canvas);
+        if (waveformData == null)
+        {
+            return;
+        }
+        drawWaveForm(canvas);
+    }
 
-	public void setWaveform(int[] frameGains) {
-		if (frameGains != null) {
-			this.waveForm = frameGains;
-			this.waveformData = frameGains;
-			if (isMeasured) {
-				adjustWaveformHeights(waveForm);
-			}
-		} else {
-			if (isMeasured) {
-				adjustWaveformHeights(empty);
-			}
-		}
-		requestLayout();
-	}
+    private void drawWaveForm(Canvas canvas)
+    {
+        int width = waveformData.length;
+        int half = getMeasuredHeight() / 2;
 
-	@Override
-	public void setSelected(boolean selected) {
-		super.setSelected(selected);
-		if (selected) {
-			waveformPaint.setColor(getContext().getResources().getColor(R.color.md_grey_500));
-		} else {
-			waveformPaint.setColor(getContext().getResources().getColor(R.color.md_grey_700));
-		}
-	}
-
-	@Override
-	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-
-		if (!isMeasured) isMeasured = true;
-		// Reconcile the measured dimensions with the this view's constraints and
-		// set the final measured width and height.
-		int width = MeasureSpec.getSize(widthMeasureSpec);
-
-		setMeasuredDimension(
-				resolveSize(width, widthMeasureSpec),
-				heightMeasureSpec);
-	}
-
-	@Override
-	protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-		super.onLayout(changed, left, top, right, bottom);
-		if (isMeasured && !isInitialized) {
-			if (waveForm != null) {
-				adjustWaveformHeights(waveForm);
-			} else {
-				adjustWaveformHeights(empty);
-			}
-		}
-	}
-
-	@Override
-	protected void onDraw(Canvas canvas) {
-		super.onDraw(canvas);
-		if (waveformData == null) {
-			return;
-		}
-		drawWaveForm(canvas);
-	}
-
-	private void drawWaveForm(Canvas canvas) {
-		int width = waveformData.length;
-		int half = getMeasuredHeight() / 2;
-
-		if (width > getMeasuredWidth()) {
-			width = getMeasuredWidth();
-		}
+        if (width > getMeasuredWidth())
+        {
+            width = getMeasuredWidth();
+        }
 
 //		Path path = new Path();
 //		path.moveTo(0, half);
@@ -162,31 +181,33 @@ public class SimpleWaveformView extends View {
 //		path.close();
 //		canvas.drawPath(path, waveformPaint);
 
-		float dpi = AndroidUtils.dpToPx(1);
-		float[] lines = new float[width*4+4];
-		int step = 0;
-		for (int i = 0; i < width; i++) {
-			lines[step] = i*dpi;
-			lines[step+1] = half + waveformData[i];
-			lines[step+2] = i*dpi;
-			lines[step+3] = half - waveformData[i];
-			step +=4;
-		}
-		//Horizontal zero line
-		lines[step] = 0;
-		lines[step+1] = half;
-		lines[step+2] = width*dpi;
-		lines[step+3] = half;
-		canvas.drawLines(lines, 0, lines.length, waveformPaint);
-	}
+        float dpi = AndroidUtils.dpToPx(1);
+        float[] lines = new float[width * 4 + 4];
+        int step = 0;
+        for (int i = 0; i < width; i++)
+        {
+            lines[step] = i * dpi;
+            lines[step + 1] = half + waveformData[i];
+            lines[step + 2] = i * dpi;
+            lines[step + 3] = half - waveformData[i];
+            step += 4;
+        }
+        //Horizontal zero line
+        lines[step] = 0;
+        lines[step + 1] = half;
+        lines[step + 2] = width * dpi;
+        lines[step + 3] = half;
+        canvas.drawLines(lines, 0, lines.length, waveformPaint);
+    }
 
-	/**
-	 * Called once when a new sound file is added
-	 */
-	private void adjustWaveformHeights(int[] frameGains) {
-		int numFrames = frameGains.length;
-		//One frame corresponds one pixel on screen
-		int[] smoothedGains = frameGains;
+    /**
+     * Called once when a new sound file is added
+     */
+    private void adjustWaveformHeights(int[] frameGains)
+    {
+        int numFrames = frameGains.length;
+        //One frame corresponds one pixel on screen
+        int[] smoothedGains = frameGains;
 //		double[] smoothedGains = new double[numFrames];
 //		if (numFrames == 1) {
 //			smoothedGains[0] = frameGains[0];
@@ -208,71 +229,80 @@ public class SimpleWaveformView extends View {
 //							(frameGains[numFrames - 1] / 2.0));
 //		}
 
-		// Make sure the range is no more than 0 - 255
-		double maxGain = 1.0;
-		for (int i = 0; i < numFrames; i++) {
-			if (smoothedGains[i] > maxGain) {
-				maxGain = smoothedGains[i];
-			}
-		}
-		double scaleFactor = 1.0;
-		if (maxGain > 255.0) {
-			scaleFactor = 255 / maxGain;
-		}
+        // Make sure the range is no more than 0 - 255
+        double maxGain = 1.0;
+        for (int i = 0; i < numFrames; i++)
+        {
+            if (smoothedGains[i] > maxGain)
+            {
+                maxGain = smoothedGains[i];
+            }
+        }
+        double scaleFactor = 1.0;
+        if (maxGain > 255.0)
+        {
+            scaleFactor = 255 / maxGain;
+        }
 
-		// Build histogram of 256 bins and figure out the new scaled max
-		maxGain = 0;
-		int gainHist[] = new int[256];
-		for (int i = 0; i < numFrames; i++) {
-			int smoothedGain = (int) (smoothedGains[i] * scaleFactor);
-			if (smoothedGain < 0)
-				smoothedGain = 0;
-			if (smoothedGain > 255)
-				smoothedGain = 255;
+        // Build histogram of 256 bins and figure out the new scaled max
+        maxGain = 0;
+        int gainHist[] = new int[256];
+        for (int i = 0; i < numFrames; i++)
+        {
+            int smoothedGain = (int) (smoothedGains[i] * scaleFactor);
+            if (smoothedGain < 0)
+                smoothedGain = 0;
+            if (smoothedGain > 255)
+                smoothedGain = 255;
 
-			if (smoothedGain > maxGain)
-				maxGain = smoothedGain;
+            if (smoothedGain > maxGain)
+                maxGain = smoothedGain;
 
-			gainHist[smoothedGain]++;
-		}
+            gainHist[smoothedGain]++;
+        }
 
-		// Re-calibrate the min to be 5%
-		double minGain = 0;
-		int sum = 0;
-		while (minGain < 255 && sum < numFrames / 20) {
-			sum += gainHist[(int) minGain];
-			minGain++;
-		}
+        // Re-calibrate the min to be 5%
+        double minGain = 0;
+        int sum = 0;
+        while (minGain < 255 && sum < numFrames / 20)
+        {
+            sum += gainHist[(int) minGain];
+            minGain++;
+        }
 
-		// Re-calibrate the max to be 99%
-		sum = 0;
-		while (maxGain > 2 && sum < numFrames / 100) {
-			sum += gainHist[(int) maxGain];
-			maxGain--;
-		}
+        // Re-calibrate the max to be 99%
+        sum = 0;
+        while (maxGain > 2 && sum < numFrames / 100)
+        {
+            sum += gainHist[(int) maxGain];
+            maxGain--;
+        }
 
-		// Compute the heights
-		double[] heights = new double[numFrames];
-		double range = maxGain - minGain;
-		if (range <= 0) {
-			range = 1;
-		}
-		for (int i = 0; i < numFrames; i++) {
-			double value = (smoothedGains[i] * scaleFactor - minGain) / range;
-			if (value < 0.0)
-				value = 0.0;
-			if (value > 1.0)
-				value = 1.0;
-			heights[i] = value * value;
-		}
+        // Compute the heights
+        double[] heights = new double[numFrames];
+        double range = maxGain - minGain;
+        if (range <= 0)
+        {
+            range = 1;
+        }
+        for (int i = 0; i < numFrames; i++)
+        {
+            double value = (smoothedGains[i] * scaleFactor - minGain) / range;
+            if (value < 0.0)
+                value = 0.0;
+            if (value > 1.0)
+                value = 1.0;
+            heights[i] = value * value;
+        }
 
-		int halfHeight = (getMeasuredHeight() / 2);// - (int)inset - 1;
+        int halfHeight = (getMeasuredHeight() / 2);// - (int)inset - 1;
 
-		waveformData = new int[numFrames];
-		for (int i = 0; i < numFrames; i++) {
-			waveformData[i] = (int) (heights[i] * (halfHeight));
-		}
+        waveformData = new int[numFrames];
+        for (int i = 0; i < numFrames; i++)
+        {
+            waveformData[i] = (int) (heights[i] * (halfHeight));
+        }
 
-		isInitialized = true;
-	}
+        isInitialized = true;
+    }
 }

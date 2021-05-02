@@ -20,13 +20,17 @@ import com.dimowner.audiorecorder.Contract;
 
 /**
  * Created on 04.04.2020.
+ *
  * @author Dimowner
  */
-public interface WelcomeContract {
+public interface WelcomeContract
+{
 
-	interface View extends Contract.View {
-	}
+    interface View extends Contract.View
+    {
+    }
 
-	interface UserActionsListener extends Contract.UserActionsListener<WelcomeContract.View> {
-	}
+    interface UserActionsListener extends Contract.UserActionsListener<WelcomeContract.View>
+    {
+    }
 }

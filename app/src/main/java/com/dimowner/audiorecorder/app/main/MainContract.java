@@ -18,6 +18,7 @@ package com.dimowner.audiorecorder.app.main;
 
 import android.content.Context;
 import android.net.Uri;
+
 import com.dimowner.audiorecorder.Contract;
 import com.dimowner.audiorecorder.IntArrayList;
 import com.dimowner.audiorecorder.app.info.RecordInfo;
@@ -27,115 +28,141 @@ import com.dimowner.audiorecorder.data.database.Record;
 import java.io.File;
 import java.util.List;
 
-public interface MainContract {
+public interface MainContract
+{
 
-	interface View extends Contract.View {
+    interface View extends Contract.View
+    {
 
-		void keepScreenOn(boolean on);
-		void showRecordingStart();
-		void showRecordingStop();
-		void showRecordingPause();
-		void showRecordingResume();
-		void onRecordingProgress(long mills, int amp);
-		void startWelcomeScreen();
+        void keepScreenOn(boolean on);
 
-		void askRecordingNewName(long id, File file,  boolean showCheckbox);
+        void showRecordingStart();
 
-		void startRecordingService();
-		void stopRecordingService();
+        void showRecordingStop();
 
-		void startPlaybackService(String name);
+        void showRecordingPause();
 
-		void showPlayStart(boolean animate);
-		void showPlayPause();
-		void showPlayStop();
-		void onPlayProgress(long mills, int percent);
+        void showRecordingResume();
 
-		void showImportStart();
-		void hideImportProgress();
+        void onRecordingProgress(long mills, int amp);
 
-		void showOptionsMenu();
-		void hideOptionsMenu();
+        void startWelcomeScreen();
 
-		void showRecordProcessing();
-		void hideRecordProcessing();
+        void askRecordingNewName(long id, File file, boolean showCheckbox);
 
-		void showWaveForm(int[] waveForm, long duration, long playbackMills);
-		void waveFormToStart();
-		void showDuration(String duration);
-		void showRecordingProgress(String progress);
-		void showName(String name);
-		void showInformation(String info);
-		void decodeRecord(int id);
+        void startRecordingService();
 
-		void askDeleteRecord(String name);
+        void stopRecordingService();
 
-		void askDeleteRecordForever();
+        void startPlaybackService(String name);
 
-		void showRecordInfo(RecordInfo info);
+        void showPlayStart(boolean animate);
 
-		void updateRecordingView(IntArrayList data, long durationMills);
+        void showPlayPause();
 
-		void showRecordsLostMessage(List<Record> list);
+        void showPlayStop();
 
-		void shareRecord(Record record);
+        void onPlayProgress(long mills, int percent);
 
-		void openFile(Record record);
+        void showImportStart();
 
-		void downloadRecord(Record record);
-	}
+        void hideImportProgress();
 
-	interface UserActionsListener extends Contract.UserActionsListener<MainContract.View> {
+        void showOptionsMenu();
 
-		void checkFirstRun();
+        void hideOptionsMenu();
 
-		void storeInPrivateDir(Context context);
+        void showRecordProcessing();
 
-		void setAudioRecorder(RecorderContract.Recorder recorder);
+        void hideRecordProcessing();
 
-		void startRecording(Context context);
-		void stopRecording(boolean deleteRecord);
-		void cancelRecording();
+        void showWaveForm(int[] waveForm, long duration, long playbackMills);
 
-		void startPlayback();
-		void seekPlayback(long mills);
-		void stopPlayback();
+        void waveFormToStart();
 
-		void renameRecord(long id, String name, String extension);
+        void showDuration(String duration);
 
-		void decodeRecord(long id);
+        void showRecordingProgress(String progress);
 
-		void loadActiveRecord();
+        void showName(String name);
 
-		void setAskToRename(boolean value);
+        void showInformation(String info);
 
-		void importAudioFile(Context context, Uri uri);
+        void decodeRecord(int id);
 
-		void updateRecordingDir(Context context);
+        void askDeleteRecord(String name);
 
-		void setStoragePrivate(Context context);
+        void askDeleteRecordForever();
 
-		void onShareRecordClick();
+        void showRecordInfo(RecordInfo info);
 
-		void onRenameRecordClick();
+        void updateRecordingView(IntArrayList data, long durationMills);
 
-		void onOpenFileClick();
+        void showRecordsLostMessage(List<Record> list);
 
-		void onDownloadClick();
+        void shareRecord(Record record);
 
-		void onDeleteClick();
+        void openFile(Record record);
 
-		//TODO: Remove this getters
-		boolean isStorePublic();
+        void downloadRecord(Record record);
+    }
 
-		String getActiveRecordPath();
+    interface UserActionsListener extends Contract.UserActionsListener<MainContract.View>
+    {
 
-		void deleteActiveRecord(boolean forever);
+        void checkFirstRun();
 
-		void onRecordInfo();
+        void storeInPrivateDir(Context context);
 
-		void disablePlaybackProgressListener();
+        void setAudioRecorder(RecorderContract.Recorder recorder);
 
-		void enablePlaybackProgressListener();
-	}
+        void startRecording(Context context);
+
+        void stopRecording(boolean deleteRecord);
+
+        void cancelRecording();
+
+        void startPlayback();
+
+        void seekPlayback(long mills);
+
+        void stopPlayback();
+
+        void renameRecord(long id, String name, String extension);
+
+        void decodeRecord(long id);
+
+        void loadActiveRecord();
+
+        void setAskToRename(boolean value);
+
+        void importAudioFile(Context context, Uri uri);
+
+        void updateRecordingDir(Context context);
+
+        void setStoragePrivate(Context context);
+
+        void onShareRecordClick();
+
+        void onRenameRecordClick();
+
+        void onOpenFileClick();
+
+        void onDownloadClick();
+
+        void onDeleteClick();
+
+        //TODO: Remove this getters
+        boolean isStorePublic();
+
+        String getActiveRecordPath();
+
+        void deleteActiveRecord(boolean forever);
+
+        void onRecordInfo();
+
+        void disablePlaybackProgressListener();
+
+        void enablePlaybackProgressListener();
+    }
 }

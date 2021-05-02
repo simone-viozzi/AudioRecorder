@@ -27,9 +27,11 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.IBinder;
+import android.widget.RemoteViews;
+
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
-import android.widget.RemoteViews;
+import androidx.core.app.NotificationManagerCompat;
 
 import com.dimowner.audiorecorder.ARApplication;
 import com.dimowner.audiorecorder.ColorMap;
@@ -41,120 +43,150 @@ import com.dimowner.audiorecorder.util.TimeUtils;
 
 import org.jetbrains.annotations.NotNull;
 
-import androidx.core.app.NotificationManagerCompat;
 import timber.log.Timber;
 
-public class PlaybackService extends Service {
+public class PlaybackService extends Service
+{
 
-	private final static String CHANNEL_NAME = "Default";
-	private final static String CHANNEL_ID = "com.dimowner.audiorecorder.NotificationId";
+    public static final String ACTION_START_PLAYBACK_SERVICE = "ACTION_START_PLAYBACK_SERVICE";
+    public static final String ACTION_PAUSE_PLAYBACK = "ACTION_PAUSE_PLAYBACK";
+    public static final String ACTION_CLOSE = "ACTION_CLOSE";
+    public static final String EXTRAS_KEY_RECORD_NAME = "record_name";
+    private final static String CHANNEL_NAME = "Default";
+    private final static String CHANNEL_ID = "com.dimowner.audiorecorder.NotificationId";
+    private static final int NOTIF_ID = 101;
+    private NotificationCompat.Builder builder;
+    private NotificationManagerCompat notificationManager;
+    private RemoteViews remoteViewsSmall;
+    //	private RemoteViews remoteViewsBig;
+    private Notification notification;
+    private String recordName = "";
+    private boolean started = false;
 
-	public static final String ACTION_START_PLAYBACK_SERVICE = "ACTION_START_PLAYBACK_SERVICE";
+    private PlayerContractNew.Player audioPlayer;
+    private PlayerContractNew.PlayerCallback playerCallback;
+    private ColorMap colorMap;
 
-	public static final String ACTION_PAUSE_PLAYBACK = "ACTION_PAUSE_PLAYBACK";
+    public PlaybackService()
+    {
+    }
 
-	public static final String ACTION_CLOSE = "ACTION_CLOSE";
+    public static void startServiceForeground(Context context, String name)
+    {
+        Intent intent = new Intent(context, PlaybackService.class);
+        intent.setAction(PlaybackService.ACTION_START_PLAYBACK_SERVICE);
+        intent.putExtra(PlaybackService.EXTRAS_KEY_RECORD_NAME, name);
+        context.startService(intent);
+    }
 
-	public static final String EXTRAS_KEY_RECORD_NAME = "record_name";
+    @Override
+    public IBinder onBind(Intent intent)
+    {
+        return null;
+    }
 
-	private static final int NOTIF_ID = 101;
-	private NotificationCompat.Builder builder;
-	private NotificationManagerCompat notificationManager;
-	private RemoteViews remoteViewsSmall;
-//	private RemoteViews remoteViewsBig;
-	private Notification notification;
-	private String recordName = "";
-	private boolean started = false;
+    @Override
+    public void onCreate()
+    {
+        super.onCreate();
 
-	private PlayerContractNew.Player audioPlayer;
-	private PlayerContractNew.PlayerCallback playerCallback;
-	private ColorMap colorMap;
+        audioPlayer = ARApplication.getInjector().provideAudioPlayer();
+        colorMap = ARApplication.getInjector().provideColorMap();
 
-	public PlaybackService() {
-	}
+        if (playerCallback == null)
+        {
+            playerCallback = new PlayerContractNew.PlayerCallback()
+            {
+                @Override
+                public void onError(@NotNull AppException throwable)
+                {
+                    stopForegroundService();
+                }
 
-	public static void startServiceForeground(Context context, String name) {
-		Intent intent = new Intent(context, PlaybackService.class);
-		intent.setAction(PlaybackService.ACTION_START_PLAYBACK_SERVICE);
-		intent.putExtra(PlaybackService.EXTRAS_KEY_RECORD_NAME, name);
-		context.startService(intent);
-	}
+                @Override
+                public void onStopPlay()
+                {
+                    stopForegroundService();
+                }
 
-	@Override
-	public IBinder onBind(Intent intent) {
-		return null;
-	}
+                @Override
+                public void onSeek(long mills)
+                {
+                }
 
-	@Override
-	public void onCreate() {
-		super.onCreate();
+                @Override
+                public void onPausePlay()
+                {
+                    onPausePlayback();
+                }
 
-		audioPlayer = ARApplication.getInjector().provideAudioPlayer();
-		colorMap = ARApplication.getInjector().provideColorMap();
+                @Override
+                public void onPlayProgress(long mills)
+                {
+                }
 
-		if (playerCallback == null) {
-			playerCallback = new PlayerContractNew.PlayerCallback() {
-				@Override public void onError(@NotNull AppException throwable) {
-					stopForegroundService();
-				}
-				@Override public void onStopPlay() {
-					stopForegroundService();
-				}
-				@Override public void onSeek(long mills) { }
-				@Override public void onPausePlay() {
-					onPausePlayback();
-				}
-				@Override public void onPlayProgress(long mills) { }
-				@Override public void onStartPlay() {
-					onStartPlayback();
-				}
-			};
-			this.audioPlayer.addPlayerCallback(playerCallback);
-		}
-	}
+                @Override
+                public void onStartPlay()
+                {
+                    onStartPlayback();
+                }
+            };
+            this.audioPlayer.addPlayerCallback(playerCallback);
+        }
+    }
 
-	@Override
-	public int onStartCommand(Intent intent, int flags, int startId) {
-		if (intent != null) {
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId)
+    {
+        if (intent != null)
+        {
 
-			String action = intent.getAction();
-			if (action != null && !action.isEmpty()) {
-				switch (action) {
-					case ACTION_START_PLAYBACK_SERVICE:
-						if (!started && intent.hasExtra(EXTRAS_KEY_RECORD_NAME)) {
-							recordName = intent.getStringExtra(EXTRAS_KEY_RECORD_NAME);
-							startForegroundService();
-						}
-						break;
-					case ACTION_PAUSE_PLAYBACK:
-						if (audioPlayer.isPlaying()) {
-							audioPlayer.pause();
-						} else if (audioPlayer.isPaused()) {
-							audioPlayer.unpause();
-						}
-						break;
-					case ACTION_CLOSE:
-						audioPlayer.stop();
-						stopForegroundService();
-						break;
-				}
-			}
-		}
-		return super.onStartCommand(intent, flags, startId);
-	}
+            String action = intent.getAction();
+            if (action != null && !action.isEmpty())
+            {
+                switch (action)
+                {
+                    case ACTION_START_PLAYBACK_SERVICE:
+                        if (!started && intent.hasExtra(EXTRAS_KEY_RECORD_NAME))
+                        {
+                            recordName = intent.getStringExtra(EXTRAS_KEY_RECORD_NAME);
+                            startForegroundService();
+                        }
+                        break;
+                    case ACTION_PAUSE_PLAYBACK:
+                        if (audioPlayer.isPlaying())
+                        {
+                            audioPlayer.pause();
+                        }
+                        else if (audioPlayer.isPaused())
+                        {
+                            audioPlayer.unpause();
+                        }
+                        break;
+                    case ACTION_CLOSE:
+                        audioPlayer.stop();
+                        stopForegroundService();
+                        break;
+                }
+            }
+        }
+        return super.onStartCommand(intent, flags, startId);
+    }
 
-	private void startForegroundService() {
-		notificationManager = NotificationManagerCompat.from(this);
+    private void startForegroundService()
+    {
+        notificationManager = NotificationManagerCompat.from(this);
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-			createNotificationChannel(CHANNEL_ID, CHANNEL_NAME);
-		}
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+        {
+            createNotificationChannel(CHANNEL_ID, CHANNEL_NAME);
+        }
 
-		remoteViewsSmall = new RemoteViews(getPackageName(), R.layout.layout_play_notification_small);
-		remoteViewsSmall.setOnClickPendingIntent(R.id.btn_pause, getPendingSelfIntent(getApplicationContext(), ACTION_PAUSE_PLAYBACK));
-		remoteViewsSmall.setOnClickPendingIntent(R.id.btn_close, getPendingSelfIntent(getApplicationContext(), ACTION_CLOSE));
-		remoteViewsSmall.setTextViewText(R.id.txt_name, recordName);
-		remoteViewsSmall.setInt(R.id.container, "setBackgroundColor", this.getResources().getColor(colorMap.getPrimaryColorRes()));
+        remoteViewsSmall = new RemoteViews(getPackageName(), R.layout.layout_play_notification_small);
+        remoteViewsSmall.setOnClickPendingIntent(R.id.btn_pause, getPendingSelfIntent(getApplicationContext(), ACTION_PAUSE_PLAYBACK));
+        remoteViewsSmall.setOnClickPendingIntent(R.id.btn_close, getPendingSelfIntent(getApplicationContext(), ACTION_CLOSE));
+        remoteViewsSmall.setTextViewText(R.id.txt_name, recordName);
+        remoteViewsSmall.setInt(R.id.container, "setBackgroundColor", this.getResources().getColor(colorMap.getPrimaryColorRes()));
 
 //		remoteViewsBig = new RemoteViews(getPackageName(), R.layout.layout_play_notification_big);
 //		remoteViewsBig.setOnClickPendingIntent(R.id.btn_pause, getPendingSelfIntent(getApplicationContext(), ACTION_PAUSE_PLAYBACK));
@@ -162,100 +194,117 @@ public class PlaybackService extends Service {
 //		remoteViewsBig.setTextViewText(R.id.txt_name, recordName);
 //		remoteViewsBig.setInt(R.id.container, "setBackgroundColor", this.getResources().getColor(colorMap.getPrimaryColorRes()));
 
-		// Create notification default intent.
-		Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-		intent.setFlags(Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP);
-		PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, intent, 0);
+        // Create notification default intent.
+        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP);
+        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, intent, 0);
 
-		// Create notification builder.
-		builder = new NotificationCompat.Builder(this, CHANNEL_ID);
+        // Create notification builder.
+        builder = new NotificationCompat.Builder(this, CHANNEL_ID);
 
-		builder.setWhen(System.currentTimeMillis());
-		builder.setContentTitle(getResources().getString(R.string.app_name));
-		builder.setSmallIcon(R.drawable.ic_play_circle);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-			builder.setPriority(NotificationManagerCompat.IMPORTANCE_LOW);
-		} else {
-			builder.setPriority(Notification.PRIORITY_LOW);
-		}
-		// Make head-up notification.
-		builder.setContentIntent(pendingIntent);
-		builder.setCustomContentView(remoteViewsSmall);
+        builder.setWhen(System.currentTimeMillis());
+        builder.setContentTitle(getResources().getString(R.string.app_name));
+        builder.setSmallIcon(R.drawable.ic_play_circle);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+        {
+            builder.setPriority(NotificationManagerCompat.IMPORTANCE_LOW);
+        }
+        else
+        {
+            builder.setPriority(Notification.PRIORITY_LOW);
+        }
+        // Make head-up notification.
+        builder.setContentIntent(pendingIntent);
+        builder.setCustomContentView(remoteViewsSmall);
 //		builder.setCustomBigContentView(remoteViewsBig);
-		builder.setOngoing(true);
-		builder.setOnlyAlertOnce(true);
-		builder.setDefaults(0);
-		builder.setSound(null);
-		notification = builder.build();
-		startForeground(NOTIF_ID, notification);
-		started = true;
-	}
+        builder.setOngoing(true);
+        builder.setOnlyAlertOnce(true);
+        builder.setDefaults(0);
+        builder.setSound(null);
+        notification = builder.build();
+        startForeground(NOTIF_ID, notification);
+        started = true;
+    }
 
-	public void stopForegroundService() {
-		audioPlayer.removePlayerCallback(playerCallback);
-		stopForeground(true);
-		stopSelf();
-		started = false;
-	}
+    public void stopForegroundService()
+    {
+        audioPlayer.removePlayerCallback(playerCallback);
+        stopForeground(true);
+        stopSelf();
+        started = false;
+    }
 
-	protected PendingIntent getPendingSelfIntent(Context context, String action) {
-		Intent intent = new Intent(context, StopPlaybackReceiver.class);
-		intent.setAction(action);
-		return PendingIntent.getBroadcast(context, 10, intent, 0);
-	}
+    protected PendingIntent getPendingSelfIntent(Context context, String action)
+    {
+        Intent intent = new Intent(context, StopPlaybackReceiver.class);
+        intent.setAction(action);
+        return PendingIntent.getBroadcast(context, 10, intent, 0);
+    }
 
-	@RequiresApi(Build.VERSION_CODES.O)
-	private void createNotificationChannel(String channelId, String channelName) {
-		NotificationChannel channel = notificationManager.getNotificationChannel(channelId);
-		if (channel == null) {
-			NotificationChannel chan = new NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_HIGH);
-			chan.setLightColor(Color.BLUE);
-			chan.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
-			chan.setSound(null,null);
-			chan.enableLights(false);
-			chan.enableVibration(false);
+    @RequiresApi(Build.VERSION_CODES.O)
+    private void createNotificationChannel(String channelId, String channelName)
+    {
+        NotificationChannel channel = notificationManager.getNotificationChannel(channelId);
+        if (channel == null)
+        {
+            NotificationChannel chan = new NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_HIGH);
+            chan.setLightColor(Color.BLUE);
+            chan.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+            chan.setSound(null, null);
+            chan.enableLights(false);
+            chan.enableVibration(false);
 
-			notificationManager.createNotificationChannel(chan);
-		} else {
-			Timber.d("Channel already exists: %s", CHANNEL_ID);
-		}
-	}
+            notificationManager.createNotificationChannel(chan);
+        }
+        else
+        {
+            Timber.d("Channel already exists: %s", CHANNEL_ID);
+        }
+    }
 
-	private void updateNotification(long mills) {
-		if (started && remoteViewsSmall != null) {
-			remoteViewsSmall.setTextViewText(R.id.txt_playback_progress,
-					getResources().getString(R.string.playback, TimeUtils.formatTimeIntervalHourMinSec2(mills)));
+    private void updateNotification(long mills)
+    {
+        if (started && remoteViewsSmall != null)
+        {
+            remoteViewsSmall.setTextViewText(R.id.txt_playback_progress,
+                    getResources().getString(R.string.playback, TimeUtils.formatTimeIntervalHourMinSec2(mills)));
 
 //		remoteViewsBig.setTextViewText(R.id.txt_playback_progress,
 //				getResources().getString(R.string.playback, TimeUtils.formatTimeIntervalHourMinSec2(mills)));
 
-			notificationManager.notify(NOTIF_ID, builder.build());
-		}
-	}
+            notificationManager.notify(NOTIF_ID, builder.build());
+        }
+    }
 
-	public void onPausePlayback() {
-		if (started && remoteViewsSmall != null) {
+    public void onPausePlayback()
+    {
+        if (started && remoteViewsSmall != null)
+        {
 //			remoteViewsBig.setImageViewResource(R.id.btn_pause, R.drawable.ic_play);
-			remoteViewsSmall.setImageViewResource(R.id.btn_pause, R.drawable.ic_play);
-			notificationManager.notify(NOTIF_ID, notification);
-		}
-	}
+            remoteViewsSmall.setImageViewResource(R.id.btn_pause, R.drawable.ic_play);
+            notificationManager.notify(NOTIF_ID, notification);
+        }
+    }
 
-	public void onStartPlayback() {
-		if (started && remoteViewsSmall != null) {
+    public void onStartPlayback()
+    {
+        if (started && remoteViewsSmall != null)
+        {
 //			remoteViewsBig.setImageViewResource(R.id.btn_pause, R.drawable.ic_pause);
-			remoteViewsSmall.setImageViewResource(R.id.btn_pause, R.drawable.ic_pause);
-			notificationManager.notify(NOTIF_ID, notification);
-		}
-	}
+            remoteViewsSmall.setImageViewResource(R.id.btn_pause, R.drawable.ic_pause);
+            notificationManager.notify(NOTIF_ID, notification);
+        }
+    }
 
-	public static class StopPlaybackReceiver extends BroadcastReceiver {
+    public static class StopPlaybackReceiver extends BroadcastReceiver
+    {
 
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			Intent stopIntent = new Intent(context, PlaybackService.class);
-			stopIntent.setAction(intent.getAction());
-			context.startService(stopIntent);
-		}
-	}
+        @Override
+        public void onReceive(Context context, Intent intent)
+        {
+            Intent stopIntent = new Intent(context, PlaybackService.class);
+            stopIntent.setAction(intent.getAction());
+            context.startService(stopIntent);
+        }
+    }
 }

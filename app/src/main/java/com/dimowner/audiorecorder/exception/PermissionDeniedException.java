@@ -16,9 +16,11 @@
 
 package com.dimowner.audiorecorder.exception;
 
-public class PermissionDeniedException extends AppException {
-	@Override
-	public int getType() {
-		return AppException.READ_PERMISSION_DENIED;
-	}
+public class PermissionDeniedException extends AppException
+{
+    @Override
+    public int getType()
+    {
+        return AppException.READ_PERMISSION_DENIED;
+    }
 }

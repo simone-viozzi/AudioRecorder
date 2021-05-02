@@ -20,19 +20,28 @@ import com.dimowner.audiorecorder.app.info.RecordInfo;
 
 import java.util.List;
 
-public interface LostRecordsContract {
+public interface LostRecordsContract
+{
 
-	interface View extends Contract.View {
-		void showLostRecords(List<RecordItem> items);
-		void showRecordInfo(RecordInfo info);
-		void onDeletedRecord(int id);
-		void showEmpty();
-		void hideEmpty();
-	}
+    interface View extends Contract.View
+    {
+        void showLostRecords(List<RecordItem> items);
 
-	interface UserActionsListener extends Contract.UserActionsListener<LostRecordsContract.View> {
-		void onRecordInfo(RecordInfo info);
-		void deleteRecord(RecordItem record);
-		void deleteRecords(List<RecordItem> list);
-	}
+        void showRecordInfo(RecordInfo info);
+
+        void onDeletedRecord(int id);
+
+        void showEmpty();
+
+        void hideEmpty();
+    }
+
+    interface UserActionsListener extends Contract.UserActionsListener<LostRecordsContract.View>
+    {
+        void onRecordInfo(RecordInfo info);
+
+        void deleteRecord(RecordItem record);
+
+        void deleteRecords(List<RecordItem> list);
+    }
 }

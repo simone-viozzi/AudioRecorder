@@ -16,9 +16,11 @@
 
 package com.dimowner.audiorecorder.exception;
 
-public class PlayerInitException extends AppException {
-	@Override
-	public int getType() {
-		return AppException.PLAYER_INIT_EXCEPTION;
-	}
+public class PlayerInitException extends AppException
+{
+    @Override
+    public int getType()
+    {
+        return AppException.PLAYER_INIT_EXCEPTION;
+    }
 }

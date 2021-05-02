@@ -16,56 +16,73 @@
 
 package com.dimowner.audiorecorder.data;
 
-public interface Prefs {
+public interface Prefs
+{
 
-	boolean isFirstRun();
-	void firstRunExecuted();
+    boolean isFirstRun();
 
-	boolean isStoreDirPublic();
-	void setStoreDirPublic(boolean b);
+    void firstRunExecuted();
 
-	//This is needed for scoped storage support
-	boolean isShowDirectorySetting();
+    boolean isStoreDirPublic();
 
-	boolean isAskToRenameAfterStopRecording();
-	boolean hasAskToRenameAfterStopRecordingSetting();
-	void setAskToRenameAfterStopRecording(boolean b);
+    void setStoreDirPublic(boolean b);
 
-	long getActiveRecord();
-	void setActiveRecord(long id);
+    //This is needed for scoped storage support
+    boolean isShowDirectorySetting();
 
-	long getRecordCounter();
-	void incrementRecordCounter();
+    boolean isAskToRenameAfterStopRecording();
 
-	void setKeepScreenOn(boolean on);
-	boolean isKeepScreenOn();
+    void setAskToRenameAfterStopRecording(boolean b);
 
-	void setRecordOrder(int order);
-	int getRecordsOrder();
+    boolean hasAskToRenameAfterStopRecordingSetting();
 
-	boolean isMigratedSettings();
-	void migrateSettings();
+    long getActiveRecord();
 
-	boolean isMigratedDb3();
-	void migrateDb3Finished();
+    void setActiveRecord(long id);
 
-	void setSettingThemeColor(String colorKey);
-	String getSettingThemeColor();
+    long getRecordCounter();
 
-	void setSettingNamingFormat(String nameKay);
-	String getSettingNamingFormat();
+    void incrementRecordCounter();
 
-	void setSettingRecordingFormat(String formatKey);
-	String getSettingRecordingFormat();
+    boolean isKeepScreenOn();
 
-	void setSettingSampleRate(int sampleRate);
-	int getSettingSampleRate();
+    void setKeepScreenOn(boolean on);
 
-	void setSettingBitrate(int rate);
-	int getSettingBitrate();
+    void setRecordOrder(int order);
 
-	void setSettingChannelCount(int count);
-	int getSettingChannelCount();
+    int getRecordsOrder();
 
-	void resetSettings();
+    boolean isMigratedSettings();
+
+    void migrateSettings();
+
+    boolean isMigratedDb3();
+
+    void migrateDb3Finished();
+
+    String getSettingThemeColor();
+
+    void setSettingThemeColor(String colorKey);
+
+    String getSettingNamingFormat();
+
+    void setSettingNamingFormat(String nameKay);
+
+    String getSettingRecordingFormat();
+
+    void setSettingRecordingFormat(String formatKey);
+
+    int getSettingSampleRate();
+
+    void setSettingSampleRate(int sampleRate);
+
+    int getSettingBitrate();
+
+    void setSettingBitrate(int rate);
+
+    int getSettingChannelCount();
+
+    void setSettingChannelCount(int count);
+
+    void resetSettings();
 }

@@ -16,26 +16,29 @@
 
 package com.dimowner.audiorecorder;
 
-public interface Contract {
+public interface Contract
+{
 
-	interface View {
-		void showProgress();
+    interface View
+    {
+        void showProgress();
 
-		void hideProgress();
+        void hideProgress();
 
-		void showError(String message);
+        void showError(String message);
 
-		void showError(int resId);
+        void showError(int resId);
 
-		void showMessage(int resId);
-	}
+        void showMessage(int resId);
+    }
 
-	interface UserActionsListener<T extends View> {
+    interface UserActionsListener<T extends View>
+    {
 
-		void bindView(T view);
+        void bindView(T view);
 
-		void unbindView();
+        void unbindView();
 
-		void clear();
-	}
+        void clear();
+    }
 }

@@ -16,17 +16,16 @@
 
 package com.dimowner.audiorecorder.audio
 
-import java.lang.Exception
-
 /**
  * Created on 03.02.2021.
  * @author Dimowner
  */
-interface AudioDecodingListener {
-	fun isCanceled(): Boolean
-	fun onStartProcessing(duration: Long, channelsCount: Int, sampleRate: Int)
-	fun onProcessingProgress(percent: Int)
-	fun onProcessingCancel()
-	fun onFinishProcessing(data: IntArray, duration: Long)
-	fun onError(exception: Exception)
+interface AudioDecodingListener
+{
+    fun isCanceled(): Boolean
+    fun onStartProcessing(duration: Long, channelsCount: Int, sampleRate: Int)
+    fun onProcessingProgress(percent: Int)
+    fun onProcessingCancel()
+    fun onFinishProcessing(data: IntArray, duration: Long)
+    fun onError(exception: Exception)
 }

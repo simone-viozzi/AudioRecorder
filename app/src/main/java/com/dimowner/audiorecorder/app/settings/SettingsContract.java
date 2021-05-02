@@ -22,82 +22,92 @@ import com.dimowner.audiorecorder.Contract;
 
 import java.io.File;
 
-public class SettingsContract {
+public class SettingsContract
+{
 
-	interface View extends Contract.View {
+    interface View extends Contract.View
+    {
 
-		void showStoreInPublicDir(boolean b);
+        void showStoreInPublicDir(boolean b);
 
-		void showDirectorySetting(boolean b);
+        void showDirectorySetting(boolean b);
 
-		void showKeepScreenOn(boolean b);
+        void showKeepScreenOn(boolean b);
 
-		void showAskToRenameAfterRecordingStop(boolean b);
+        void showAskToRenameAfterRecordingStop(boolean b);
 
-		void showRecordingBitrate(int bitrate);
+        void showRecordingBitrate(int bitrate);
 
-		void showRecordingSampleRate(int rate);
+        void showRecordingSampleRate(int rate);
 
-		void showRecordingFormat(String formatKey);
+        void showRecordingFormat(String formatKey);
 
-		void showNamingFormat(String namingKey);
+        void showNamingFormat(String namingKey);
 
-		void showChannelCount(int count);
+        void showChannelCount(int count);
 
-		void showAllRecordsDeleted();
+        void showAllRecordsDeleted();
 
-		void showFailDeleteAllRecords();
+        void showFailDeleteAllRecords();
 
-		void showTotalRecordsDuration(String duration);
-		void showRecordsCount(int count);
-		void showAvailableSpace(String space);
+        void showTotalRecordsDuration(String duration);
 
-		void showBitrateSelector();
-		void hideBitrateSelector();
+        void showRecordsCount(int count);
 
-		void showDialogPublicDirInfo();
+        void showAvailableSpace(String space);
 
-		void showDialogPrivateDirInfo();
+        void showBitrateSelector();
 
-		void updateRecordingInfo(String format);
+        void hideBitrateSelector();
 
-		void showSizePerMin(String size);
-		void showInformation(String info);
+        void showDialogPublicDirInfo();
 
-		void showRecordsLocation(String location);
-		void hideRecordsLocation();
-		void openRecordsLocation(File file);
+        void showDialogPrivateDirInfo();
 
-		void enableAudioSettings();
-		void disableAudioSettings();
-	}
+        void updateRecordingInfo(String format);
 
-	public interface UserActionsListener extends Contract.UserActionsListener<SettingsContract.View> {
+        void showSizePerMin(String size);
 
-		void loadSettings();
+        void showInformation(String info);
 
-		void storeInPublicDir(Context context, boolean b);
+        void showRecordsLocation(String location);
 
-		void keepScreenOn(boolean b);
+        void hideRecordsLocation();
 
-		void askToRenameAfterRecordingStop(boolean b);
+        void openRecordsLocation(File file);
 
-		void setSettingRecordingBitrate(int bitrate);
+        void enableAudioSettings();
 
-		void setSettingSampleRate(int rate);
+        void disableAudioSettings();
+    }
 
-		void setSettingChannelCount(int count);
+    public interface UserActionsListener extends Contract.UserActionsListener<SettingsContract.View>
+    {
 
-		void setSettingThemeColor(String colorKey);
+        void loadSettings();
 
-		void setSettingNamingFormat(String namingKey);
+        void storeInPublicDir(Context context, boolean b);
 
-		void setSettingRecordingFormat(String formatKey);
+        void keepScreenOn(boolean b);
 
-		void deleteAllRecords();
+        void askToRenameAfterRecordingStop(boolean b);
 
-		void resetSettings();
+        void setSettingRecordingBitrate(int bitrate);
 
-		void onRecordsLocationClick();
-	}
+        void setSettingSampleRate(int rate);
+
+        void setSettingChannelCount(int count);
+
+        void setSettingThemeColor(String colorKey);
+
+        void setSettingNamingFormat(String namingKey);
+
+        void setSettingRecordingFormat(String formatKey);
+
+        void deleteAllRecords();
+
+        void resetSettings();
+
+        void onRecordsLocationClick();
+    }
 }

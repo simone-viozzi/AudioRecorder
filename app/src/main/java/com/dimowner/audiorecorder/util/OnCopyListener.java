@@ -18,12 +18,18 @@ package com.dimowner.audiorecorder.util;
 
 /**
  * Created on 22.03.2020.
+ *
  * @author Dimowner
  */
-public interface OnCopyListener {
-	boolean isCancel();
-	void onCopyProgress(int percent);
-	void onCanceled();
-	void onCopyFinish(String message);
-	void onError(String message);
+public interface OnCopyListener
+{
+    boolean isCancel();
+
+    void onCopyProgress(int percent);
+
+    void onCanceled();
+
+    void onCopyFinish(String message);
+
+    void onError(String message);
 }

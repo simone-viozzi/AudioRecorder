@@ -22,121 +22,139 @@ import com.dimowner.audiorecorder.data.database.Record;
 
 import java.util.List;
 
-public interface RecordsContract {
+public interface RecordsContract
+{
 
-	interface View extends Contract.View {
+    interface View extends Contract.View
+    {
 
-		void showPlayStart();
-		void showPlayPause();
-		void showPlayStop();
-		void onPlayProgress(long mills, int percent);
+        void showPlayStart();
 
-		void showNextRecord();
-		void showPrevRecord();
+        void showPlayPause();
 
-		void showTrashBtn();
-		void hideTrashBtn();
+        void showPlayStop();
 
-		void showPlayerPanel();
+        void onPlayProgress(long mills, int percent);
 
-		void startPlaybackService();
+        void showNextRecord();
 
-		void showWaveForm(int[] waveForm, long duration, long playbackMills);
-		void showDuration(String duration);
+        void showPrevRecord();
 
-		void showRecords(List<ListItem> records, int order);
-		void addRecords(List<ListItem> records, int order);
+        void showTrashBtn();
 
-		void showEmptyList();
-		void showEmptyBookmarksList();
+        void hideTrashBtn();
 
-		void showPanelProgress();
-		void hidePanelProgress();
+        void showPlayerPanel();
 
-		void decodeRecord(int id);
+        void startPlaybackService();
 
-		void showRecordName(String name);
+        void showWaveForm(int[] waveForm, long duration, long playbackMills);
 
-		void showRename(Record record);
+        void showDuration(String duration);
 
-		void onDeleteRecord(long id);
+        void showRecords(List<ListItem> records, int order);
 
-		void hidePlayPanel();
+        void addRecords(List<ListItem> records, int order);
 
-		void addedToBookmarks(int id, boolean isActive);
-		void removedFromBookmarks(int id, boolean isActive);
+        void showEmptyList();
 
-		void showSortType(int type);
+        void showEmptyBookmarksList();
 
-		void showActiveRecord(int id);
+        void showPanelProgress();
 
-		void bookmarksSelected();
-		void bookmarksUnselected();
+        void hidePanelProgress();
 
-		void showRecordInfo(RecordInfo info);
+        void decodeRecord(int id);
 
-		void showRecordsLostMessage(List<Record> list);
+        void showRecordName(String name);
 
-		void cancelMultiSelect();
-	}
+        void showRename(Record record);
 
-	interface UserActionsListener extends Contract.UserActionsListener<RecordsContract.View> {
+        void onDeleteRecord(long id);
 
-		void onResumeView();
+        void hidePlayPanel();
 
-		void startPlayback();
+        void addedToBookmarks(int id, boolean isActive);
 
-		void pausePlayback();
+        void removedFromBookmarks(int id, boolean isActive);
 
-		void seekPlayback(long mills);
+        void showSortType(int type);
 
-		void stopPlayback();
+        void showActiveRecord(int id);
 
-		void playNext();
+        void bookmarksSelected();
 
-		void playPrev();
+        void bookmarksUnselected();
 
-		void deleteActiveRecord();
+        void showRecordInfo(RecordInfo info);
 
-		void deleteRecord(long id, String path);
+        void showRecordsLostMessage(List<Record> list);
 
-		void deleteRecords(List<Long> ids);
+        void cancelMultiSelect();
+    }
 
-		void renameRecord(long id, String name, String extension);
+    interface UserActionsListener extends Contract.UserActionsListener<RecordsContract.View>
+    {
 
-		void loadRecords();
+        void onResumeView();
 
-		void updateRecordsOrder(int order);
+        void startPlayback();
 
-		void loadRecordsPage(int page);
+        void pausePlayback();
 
-		void decodeActiveRecord();
+        void seekPlayback(long mills);
 
-		void applyBookmarksFilter();
-		void checkBookmarkActiveRecord();
+        void stopPlayback();
 
-		void addToBookmark(int id);
-		void removeFromBookmarks(int id);
+        void playNext();
 
-		void setActiveRecord(long id, Callback callback);
+        void playPrev();
 
-		void onRenameClick();
+        void deleteActiveRecord();
 
-		long getActiveRecordId();
+        void deleteRecord(long id, String path);
 
-		String getActiveRecordPath();
+        void deleteRecords(List<Long> ids);
 
-		String getRecordName();
+        void renameRecord(long id, String name, String extension);
 
-		void onRecordInfo(RecordInfo info);
+        void loadRecords();
 
-		void disablePlaybackProgressListener();
+        void updateRecordsOrder(int order);
 
-		void enablePlaybackProgressListener();
-	}
+        void loadRecordsPage(int page);
 
-	interface Callback {
-		void onSuccess();
-		void onError(Exception e);
-	}
+        void decodeActiveRecord();
+
+        void applyBookmarksFilter();
+
+        void checkBookmarkActiveRecord();
+
+        void addToBookmark(int id);
+
+        void removeFromBookmarks(int id);
+
+        void setActiveRecord(long id, Callback callback);
+
+        void onRenameClick();
+
+        long getActiveRecordId();
+
+        String getActiveRecordPath();
+
+        String getRecordName();
+
+        void onRecordInfo(RecordInfo info);
+
+        void disablePlaybackProgressListener();
+
+        void enablePlaybackProgressListener();
+    }
+
+    interface Callback
+    {
+        void onSuccess();
+
+        void onError(Exception e);
+    }
 }

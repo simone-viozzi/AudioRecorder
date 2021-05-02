@@ -18,49 +18,52 @@ package com.dimowner.audiorecorder.app.setup;
 
 import com.dimowner.audiorecorder.Contract;
 
-public class SetupContract {
+public class SetupContract
+{
 
-	interface View extends Contract.View {
+    interface View extends Contract.View
+    {
 
-		void showRecordingBitrate(int bitrate);
+        void showRecordingBitrate(int bitrate);
 
-		void showSampleRate(int rate);
+        void showSampleRate(int rate);
 
-		void showChannelCount(int count);
+        void showChannelCount(int count);
 
-		void showNamingFormat(String namingKey);
+        void showNamingFormat(String namingKey);
 
-		void showRecordingFormat(String formatKey);
+        void showRecordingFormat(String formatKey);
 
-		void showBitrateSelector();
+        void showBitrateSelector();
 
-		void hideBitrateSelector();
+        void hideBitrateSelector();
 
-		void showInformation(int infoResId);
+        void showInformation(int infoResId);
 
-		void showSizePerMin(String size);
+        void showSizePerMin(String size);
 
-		void updateRecordingInfo(String format);
-	}
+        void updateRecordingInfo(String format);
+    }
 
-	public interface UserActionsListener extends Contract.UserActionsListener<SetupContract.View> {
+    public interface UserActionsListener extends Contract.UserActionsListener<SetupContract.View>
+    {
 
-		void loadSettings();
+        void loadSettings();
 
-		void setSettingRecordingBitrate(int bitrate);
+        void setSettingRecordingBitrate(int bitrate);
 
-		void setSettingSampleRate(int rate);
+        void setSettingSampleRate(int rate);
 
-		void setSettingChannelCount(int count);
+        void setSettingChannelCount(int count);
 
-		void setSettingThemeColor(String colorKey);
+        void setSettingThemeColor(String colorKey);
 
-		void setSettingNamingFormat(String namingKey);
+        void setSettingNamingFormat(String namingKey);
 
-		void setSettingRecordingFormat(String formatKey);
+        void setSettingRecordingFormat(String formatKey);
 
-		void executeFirstRun();
+        void executeFirstRun();
 
-		void resetSettings();
-	}
+        void resetSettings();
+    }
 }

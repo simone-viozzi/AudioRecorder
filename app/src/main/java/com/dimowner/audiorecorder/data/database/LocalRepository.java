@@ -21,63 +21,64 @@ import com.dimowner.audiorecorder.exception.FailedToRestoreRecord;
 import java.io.IOException;
 import java.util.List;
 
-public interface LocalRepository {
+public interface LocalRepository
+{
 
-	void open();
+    void open();
 
-	void close();
+    void close();
 
-	Record getRecord(int id);
+    Record getRecord(int id);
 
-	Record findRecordByPath(String path);
+    Record findRecordByPath(String path);
 
-	Record getTrashRecord(int id);
+    Record getTrashRecord(int id);
 
-	List<Record> getAllRecords();
+    List<Record> getAllRecords();
 
-	List<Integer> getAllItemsIds();
+    List<Integer> getAllItemsIds();
 
-	List<Record> getRecords(int page);
+    List<Record> getRecords(int page);
 
-	List<Record> getRecords(int page, int order);
+    List<Record> getRecords(int page, int order);
 
-	boolean deleteAllRecords();
+    boolean deleteAllRecords();
 
-	Record getLastRecord();
+    Record getLastRecord();
 
-	Record insertRecord(Record record);
+    Record insertRecord(Record record);
 
-	boolean updateRecord(Record record);
+    boolean updateRecord(Record record);
 
-	boolean updateTrashRecord(Record record);
+    boolean updateTrashRecord(Record record);
 
-	Record insertEmptyFile(String filePath) throws IOException;
+    Record insertEmptyFile(String filePath) throws IOException;
 
-	void deleteRecord(int id);
+    void deleteRecord(int id);
 
-	void deleteRecordForever(int id);
+    void deleteRecordForever(int id);
 
-	List<Long> getRecordsDurations();
+    List<Long> getRecordsDurations();
 
-	boolean addToBookmarks(int id);
+    boolean addToBookmarks(int id);
 
-	boolean removeFromBookmarks(int id);
+    boolean removeFromBookmarks(int id);
 
-	List<Record> getBookmarks();
+    List<Record> getBookmarks();
 
-	List<Record> getTrashRecords();
+    List<Record> getTrashRecords();
 
-	List<Integer> getTrashRecordsIds();
+    List<Integer> getTrashRecordsIds();
 
-	int getTrashRecordsCount();
+    int getTrashRecordsCount();
 
-	void restoreFromTrash(int id) throws FailedToRestoreRecord;
+    void restoreFromTrash(int id) throws FailedToRestoreRecord;
 
-	boolean removeFromTrash(int id);
+    boolean removeFromTrash(int id);
 
-	boolean emptyTrash();
+    boolean emptyTrash();
 
-	void removeOutdatedTrashRecords();
+    void removeOutdatedTrashRecords();
 
-	void setOnRecordsLostListener(OnRecordsLostListener listener);
+    void setOnRecordsLostListener(OnRecordsLostListener listener);
 }

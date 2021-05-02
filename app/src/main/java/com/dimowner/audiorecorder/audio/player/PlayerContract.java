@@ -20,30 +20,49 @@ import com.dimowner.audiorecorder.exception.AppException;
 
 /**
  * @deprecated use {@link PlayerContractNew}
- * */
-public interface PlayerContract {
+ */
+public interface PlayerContract
+{
 
-	interface PlayerCallback {
-		void onPreparePlay();
-		void onStartPlay();
-		void onPlayProgress(long mills);
-		void onStopPlay();
-		void onPausePlay();
-		void onSeek(long mills);
-		void onError(AppException throwable);
-	}
+    interface PlayerCallback
+    {
+        void onPreparePlay();
 
-	interface Player {
-		void addPlayerCallback(PlayerContract.PlayerCallback callback);
-		boolean removePlayerCallback(PlayerContract.PlayerCallback callback);
-		void setData(String data);
-		void playOrPause();
-		void seek(long mills);
-		void pause();
-		void stop();
-		boolean isPlaying();
-		boolean isPause();
-		long getPauseTime();
-		void release();
-	}
+        void onStartPlay();
+
+        void onPlayProgress(long mills);
+
+        void onStopPlay();
+
+        void onPausePlay();
+
+        void onSeek(long mills);
+
+        void onError(AppException throwable);
+    }
+
+    interface Player
+    {
+        void addPlayerCallback(PlayerContract.PlayerCallback callback);
+
+        boolean removePlayerCallback(PlayerContract.PlayerCallback callback);
+
+        void setData(String data);
+
+        void playOrPause();
+
+        void seek(long mills);
+
+        void pause();
+
+        void stop();
+
+        boolean isPlaying();
+
+        boolean isPause();
+
+        long getPauseTime();
+
+        void release();
+    }
 }

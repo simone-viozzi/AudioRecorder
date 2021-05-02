@@ -18,33 +18,37 @@ package com.dimowner.audiorecorder.audio.player
 
 import com.dimowner.audiorecorder.exception.AppException
 
-interface PlayerContractNew {
-	interface PlayerCallback {
-		fun onStartPlay()
-		fun onPlayProgress(mills: Long)
-		fun onPausePlay()
-		fun onSeek(mills: Long)
-		fun onStopPlay()
-		fun onError(throwable: AppException)
-	}
+interface PlayerContractNew
+{
+    interface PlayerCallback
+    {
+        fun onStartPlay()
+        fun onPlayProgress(mills: Long)
+        fun onPausePlay()
+        fun onSeek(mills: Long)
+        fun onStopPlay()
+        fun onError(throwable: AppException)
+    }
 
-	interface Player {
-		fun addPlayerCallback(callback: PlayerCallback)
-		fun removePlayerCallback(callback: PlayerCallback): Boolean
-		fun play(filePath: String)
-		fun pause()
-		fun unpause()
-		fun seek(mills: Long)
-		fun stop()
-		fun release()
-		fun getPauseTime(): Long
-		fun isPaused(): Boolean
-		fun isPlaying(): Boolean
-	}
+    interface Player
+    {
+        fun addPlayerCallback(callback: PlayerCallback)
+        fun removePlayerCallback(callback: PlayerCallback): Boolean
+        fun play(filePath: String)
+        fun pause()
+        fun unpause()
+        fun seek(mills: Long)
+        fun stop()
+        fun release()
+        fun getPauseTime(): Long
+        fun isPaused(): Boolean
+        fun isPlaying(): Boolean
+    }
 }
 
-enum class PlayerState {
-	STOPPED,
-	PLAYING,
-	PAUSED
+enum class PlayerState
+{
+    STOPPED,
+    PLAYING,
+    PAUSED
 }

@@ -26,10 +26,12 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.IBinder;
-import androidx.annotation.RequiresApi;
-import androidx.core.app.NotificationCompat;
 import android.widget.RemoteViews;
 import android.widget.Toast;
+
+import androidx.annotation.RequiresApi;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 import com.dimowner.audiorecorder.ARApplication;
 import com.dimowner.audiorecorder.BackgroundQueue;
@@ -43,224 +45,263 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import androidx.core.app.NotificationManagerCompat;
 import timber.log.Timber;
 
 /**
  * Created on 28.03.2020.
+ *
  * @author Dimowner
  */
-public class DownloadService extends Service {
+public class DownloadService extends Service
+{
 
-	private final static String CHANNEL_NAME = "Default";
-	private final static String CHANNEL_ID = "com.dimowner.audiorecorder.Download.Notification";
+    public static final String ACTION_START_DOWNLOAD_SERVICE = "ACTION_START_DOWNLOAD_SERVICE";
+    public static final String ACTION_STOP_DOWNLOAD_SERVICE = "ACTION_STOP_DOWNLOAD_SERVICE";
+    public static final String ACTION_CANCEL_DOWNLOAD = "ACTION_CANCEL_DOWNLOAD";
+    public static final String EXTRAS_KEY_DOWNLOAD_INFO = "key_download_info";
+    private final static String CHANNEL_NAME = "Default";
+    private final static String CHANNEL_ID = "com.dimowner.audiorecorder.Download.Notification";
+    private static final int NOTIF_ID = 103;
+    private NotificationCompat.Builder builder;
+    private NotificationManagerCompat notificationManager;
+    private RemoteViews remoteViewsSmall;
+    private String downloadingRecordName = "";
+    private BackgroundQueue copyTasks;
+    private ColorMap colorMap;
+    private boolean isCancel = false;
 
-	public static final String ACTION_START_DOWNLOAD_SERVICE = "ACTION_START_DOWNLOAD_SERVICE";
-	public static final String ACTION_STOP_DOWNLOAD_SERVICE = "ACTION_STOP_DOWNLOAD_SERVICE";
-	public static final String ACTION_CANCEL_DOWNLOAD = "ACTION_CANCEL_DOWNLOAD";
+    public DownloadService()
+    {
+    }
 
-	public static final String EXTRAS_KEY_DOWNLOAD_INFO = "key_download_info";
+    public static void startNotification(Context context, String downloadInfo)
+    {
+        ArrayList<String> list = new ArrayList<>();
+        list.add(downloadInfo);
+        startNotification(context, list);
+    }
 
-	private static final int NOTIF_ID = 103;
-	private NotificationCompat.Builder builder;
-	private NotificationManagerCompat notificationManager;
-	private RemoteViews remoteViewsSmall;
-	private String downloadingRecordName = "";
-	private BackgroundQueue copyTasks;
-	private ColorMap colorMap;
-	private boolean isCancel = false;
+    public static void startNotification(Context context, ArrayList<String> downloadInfoList)
+    {
+        Intent intent = new Intent(context, DownloadService.class);
+        intent.setAction(ACTION_START_DOWNLOAD_SERVICE);
+        intent.putStringArrayListExtra(EXTRAS_KEY_DOWNLOAD_INFO, downloadInfoList);
+        context.startService(intent);
+    }
 
-	public DownloadService() {
-	}
+    @Override
+    public IBinder onBind(Intent intent)
+    {
+        return null;
+    }
 
-	public static void startNotification(Context context, String downloadInfo) {
-		ArrayList<String> list = new ArrayList<>();
-		list.add(downloadInfo);
-		startNotification(context, list);
-	}
+    @Override
+    public void onCreate()
+    {
+        super.onCreate();
 
-	public static void startNotification(Context context, ArrayList<String> downloadInfoList) {
-		Intent intent = new Intent(context, DownloadService.class);
-		intent.setAction(ACTION_START_DOWNLOAD_SERVICE);
-		intent.putStringArrayListExtra(EXTRAS_KEY_DOWNLOAD_INFO, downloadInfoList);
-		context.startService(intent);
-	}
+        colorMap = ARApplication.getInjector().provideColorMap();
+        copyTasks = ARApplication.getInjector().provideCopyTasksQueue();
+    }
 
-	@Override
-	public IBinder onBind(Intent intent) {
-		return null;
-	}
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId)
+    {
+        if (intent != null)
+        {
+            String action = intent.getAction();
+            if (action != null && !action.isEmpty())
+            {
+                switch (action)
+                {
+                    case ACTION_START_DOWNLOAD_SERVICE:
+                        if (intent.hasExtra(EXTRAS_KEY_DOWNLOAD_INFO))
+                        {
+                            startDownload(intent.getStringArrayListExtra(EXTRAS_KEY_DOWNLOAD_INFO));
+                        }
+                        break;
+                    case ACTION_STOP_DOWNLOAD_SERVICE:
+                        stopService();
+                        break;
+                    case ACTION_CANCEL_DOWNLOAD:
+                        isCancel = true;
+                        stopService();
+                        break;
+                }
+            }
+        }
+        return super.onStartCommand(intent, flags, startId);
+    }
 
-	@Override
-	public void onCreate() {
-		super.onCreate();
+    public void startDownload(ArrayList<String> list)
+    {
+        if (list == null || list.isEmpty())
+        {
+            stopService();
+        }
+        else
+        {
+            List<File> files = new ArrayList<>();
+            for (int i = 0; i < list.size(); i++)
+            {
+                files.add(new File(list.get(i)));
+            }
+            copyFiles(files);
+            startNotification();
+        }
+    }
 
-		colorMap = ARApplication.getInjector().provideColorMap();
-		copyTasks = ARApplication.getInjector().provideCopyTasksQueue();
-	}
+    private void copyFiles(final List<File> list)
+    {
+        isCancel = false;
+        copyTasks.postRunnable(new Runnable()
+        {
+            long prevTime = 0;
 
-	@Override
-	public int onStartCommand(Intent intent, int flags, int startId) {
-		if (intent != null) {
-			String action = intent.getAction();
-			if (action != null && !action.isEmpty()) {
-				switch (action) {
-					case ACTION_START_DOWNLOAD_SERVICE:
-						if (intent.hasExtra(EXTRAS_KEY_DOWNLOAD_INFO)) {
-							startDownload(intent.getStringArrayListExtra(EXTRAS_KEY_DOWNLOAD_INFO));
-						}
-						break;
-					case ACTION_STOP_DOWNLOAD_SERVICE:
-						stopService();
-						break;
-					case ACTION_CANCEL_DOWNLOAD:
-						isCancel = true;
-						stopService();
-						break;
-				}
-			}
-		}
-		return super.onStartCommand(intent, flags, startId);
-	}
+            @Override
+            public void run()
+            {
+                DownloadManagerKt.downloadFiles(getApplicationContext(), list,
+                        new OnCopyListener()
+                        {
+                            @Override
+                            public boolean isCancel()
+                            {
+                                return isCancel;
+                            }
 
-	public void startDownload(ArrayList<String> list) {
-		if (list == null || list.isEmpty()) {
-			stopService();
-		} else {
-			List<File> files = new ArrayList<>();
-			for (int i = 0; i < list.size(); i++) {
-				files.add(new File(list.get(i)));
-			}
-			copyFiles(files);
-			startNotification();
-		}
-	}
+                            @Override
+                            public void onCopyProgress(int percent)
+                            {
+                                long curTime = System.currentTimeMillis();
+                                if (percent >= 95)
+                                {
+                                    percent = 100;
+                                }
+                                if (percent == 100 || curTime > prevTime + 200)
+                                {
+                                    updateNotification(percent);
+                                    prevTime = curTime;
+                                }
+                            }
 
-	private void copyFiles(final List<File> list) {
-		isCancel = false;
-		copyTasks.postRunnable(new Runnable() {
-			long prevTime = 0;
-			@Override
-			public void run() {
-				DownloadManagerKt.downloadFiles(getApplicationContext(), list,
-						new OnCopyListener() {
-							@Override
-							public boolean isCancel() {
-								return isCancel;
-							}
+                            @Override
+                            public void onCanceled()
+                            {
+                                Toast.makeText(getApplicationContext(), R.string.downloading_cancel, Toast.LENGTH_LONG).show();
+                                stopService();
+                            }
 
-							@Override
-							public void onCopyProgress(int percent) {
-								long curTime = System.currentTimeMillis();
-								if (percent >= 95) {
-									percent = 100;
-								}
-								if (percent == 100 || curTime > prevTime + 200) {
-									updateNotification(percent);
-									prevTime = curTime;
-								}
-							}
+                            @Override
+                            public void onCopyFinish(String message)
+                            {
+                                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
+                                stopService();
+                            }
 
-							@Override
-							public void onCanceled() {
-								Toast.makeText(getApplicationContext(), R.string.downloading_cancel, Toast.LENGTH_LONG).show();
-								stopService();
-							}
+                            @Override
+                            public void onError(String message)
+                            {
+                                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
+                                stopService();
+                            }
+                        });
+            }
+        });
+    }
 
-							@Override
-							public void onCopyFinish(String message) {
-								Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
-								stopService();
-							}
+    private void startNotification()
+    {
+        notificationManager = NotificationManagerCompat.from(this);
 
-							@Override
-							public void onError(String message) {
-								Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
-								stopService();
-							}
-						});
-			}
-		});
-	}
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+        {
+            createNotificationChannel(CHANNEL_ID, CHANNEL_NAME);
+        }
 
-	private void startNotification() {
-		notificationManager = NotificationManagerCompat.from(this);
+        remoteViewsSmall = new RemoteViews(getPackageName(), R.layout.layout_progress_notification);
+        remoteViewsSmall.setOnClickPendingIntent(R.id.btn_close, getPendingSelfIntent(getApplicationContext(), ACTION_CANCEL_DOWNLOAD));
+        remoteViewsSmall.setTextViewText(R.id.txt_name, getResources().getString(R.string.downloading, downloadingRecordName));
+        remoteViewsSmall.setInt(R.id.container, "setBackgroundColor", this.getResources().getColor(colorMap.getPrimaryColorRes()));
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-			createNotificationChannel(CHANNEL_ID, CHANNEL_NAME);
-		}
+        // Create notification default intent.
+        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP);
+        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, intent, 0);
 
-		remoteViewsSmall = new RemoteViews(getPackageName(), R.layout.layout_progress_notification);
-		remoteViewsSmall.setOnClickPendingIntent(R.id.btn_close, getPendingSelfIntent(getApplicationContext(), ACTION_CANCEL_DOWNLOAD));
-		remoteViewsSmall.setTextViewText(R.id.txt_name, getResources().getString(R.string.downloading, downloadingRecordName));
-		remoteViewsSmall.setInt(R.id.container, "setBackgroundColor", this.getResources().getColor(colorMap.getPrimaryColorRes()));
+        // Create notification builder.
+        builder = new NotificationCompat.Builder(this, CHANNEL_ID);
 
-		// Create notification default intent.
-		Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-		intent.setFlags(Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP);
-		PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, intent, 0);
+        builder.setWhen(System.currentTimeMillis());
+        builder.setContentTitle(getResources().getString(R.string.app_name));
+        builder.setSmallIcon(R.drawable.ic_save_alt);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+        {
+            builder.setPriority(NotificationManagerCompat.IMPORTANCE_DEFAULT);
+        }
+        else
+        {
+            builder.setPriority(NotificationCompat.PRIORITY_DEFAULT);
+        }
+        // Make head-up notification.
+        builder.setContentIntent(pendingIntent);
+        builder.setCustomContentView(remoteViewsSmall);
+        builder.setOngoing(true);
+        builder.setOnlyAlertOnce(true);
+        builder.setDefaults(0);
+        builder.setSound(null);
+        startForeground(NOTIF_ID, builder.build());
+    }
 
-		// Create notification builder.
-		builder = new NotificationCompat.Builder(this, CHANNEL_ID);
+    public void stopService()
+    {
+        stopForeground(true);
+        stopSelf();
+    }
 
-		builder.setWhen(System.currentTimeMillis());
-		builder.setContentTitle(getResources().getString(R.string.app_name));
-		builder.setSmallIcon(R.drawable.ic_save_alt);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-			builder.setPriority(NotificationManagerCompat.IMPORTANCE_DEFAULT);
-		} else {
-			builder.setPriority(NotificationCompat.PRIORITY_DEFAULT);
-		}
-		// Make head-up notification.
-		builder.setContentIntent(pendingIntent);
-		builder.setCustomContentView(remoteViewsSmall);
-		builder.setOngoing(true);
-		builder.setOnlyAlertOnce(true);
-		builder.setDefaults(0);
-		builder.setSound(null);
-		startForeground(NOTIF_ID, builder.build());
-	}
+    protected PendingIntent getPendingSelfIntent(Context context, String action)
+    {
+        Intent intent = new Intent(context, StopDownloadReceiver.class);
+        intent.setAction(action);
+        return PendingIntent.getBroadcast(context, 10, intent, 0);
+    }
 
-	public void stopService() {
-		stopForeground(true);
-		stopSelf();
-	}
+    @RequiresApi(Build.VERSION_CODES.O)
+    private void createNotificationChannel(String channelId, String channelName)
+    {
+        NotificationChannel channel = notificationManager.getNotificationChannel(channelId);
+        if (channel == null)
+        {
+            NotificationChannel chan = new NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_DEFAULT);
+            chan.setLightColor(Color.BLUE);
+            chan.setLockscreenVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+            chan.setSound(null, null);
+            chan.enableLights(false);
+            chan.enableVibration(false);
 
-	protected PendingIntent getPendingSelfIntent(Context context, String action) {
-		Intent intent = new Intent(context, StopDownloadReceiver.class);
-		intent.setAction(action);
-		return PendingIntent.getBroadcast(context, 10, intent, 0);
-	}
+            notificationManager.createNotificationChannel(chan);
+        }
+        else
+        {
+            Timber.v("Channel already exists: %s", CHANNEL_ID);
+        }
+    }
 
-	@RequiresApi(Build.VERSION_CODES.O)
-	private void createNotificationChannel(String channelId, String channelName) {
-		NotificationChannel channel = notificationManager.getNotificationChannel(channelId);
-		if (channel == null) {
-			NotificationChannel chan = new NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_DEFAULT);
-			chan.setLightColor(Color.BLUE);
-			chan.setLockscreenVisibility(NotificationCompat.VISIBILITY_PUBLIC);
-			chan.setSound(null, null);
-			chan.enableLights(false);
-			chan.enableVibration(false);
+    private void updateNotification(int percent)
+    {
+        remoteViewsSmall.setProgressBar(R.id.progress, 100, percent, false);
+        notificationManager.notify(NOTIF_ID, builder.build());
+    }
 
-			notificationManager.createNotificationChannel(chan);
-		} else {
-			Timber.v("Channel already exists: %s", CHANNEL_ID);
-		}
-	}
+    public static class StopDownloadReceiver extends BroadcastReceiver
+    {
 
-	private void updateNotification(int percent) {
-		remoteViewsSmall.setProgressBar(R.id.progress, 100, percent, false);
-		notificationManager.notify(NOTIF_ID, builder.build());
-	}
-
-	public static class StopDownloadReceiver extends BroadcastReceiver {
-
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			Intent stopIntent = new Intent(context, DownloadService.class);
-			stopIntent.setAction(intent.getAction());
-			context.startService(stopIntent);
-		}
-	}
+        @Override
+        public void onReceive(Context context, Intent intent)
+        {
+            Intent stopIntent = new Intent(context, DownloadService.class);
+            stopIntent.setAction(intent.getAction());
+            context.startService(stopIntent);
+        }
+    }
 }

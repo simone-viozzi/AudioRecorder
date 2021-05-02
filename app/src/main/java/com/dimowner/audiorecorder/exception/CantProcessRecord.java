@@ -16,9 +16,11 @@
 
 package com.dimowner.audiorecorder.exception;
 
-public class CantProcessRecord extends AppException {
-	@Override
-	public int getType() {
-		return AppException.CANT_PROCESS_RECORD;
-	}
+public class CantProcessRecord extends AppException
+{
+    @Override
+    public int getType()
+    {
+        return AppException.CANT_PROCESS_RECORD;
+    }
 }

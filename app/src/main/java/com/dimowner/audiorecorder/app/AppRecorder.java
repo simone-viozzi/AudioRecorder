@@ -19,18 +19,30 @@ package com.dimowner.audiorecorder.app;
 import com.dimowner.audiorecorder.IntArrayList;
 import com.dimowner.audiorecorder.audio.recorder.RecorderContract;
 
-public interface AppRecorder {
+public interface AppRecorder
+{
 
-	void addRecordingCallback(AppRecorderCallback recorderCallback);
-	void removeRecordingCallback(AppRecorderCallback recorderCallback);
-	void setRecorder(RecorderContract.Recorder recorder);
-	void startRecording(String filePath, int channelCount, int sampleRate, int bitrate);
-	void pauseRecording();
-	void resumeRecording();
-	void stopRecording();
-	IntArrayList getRecordingData();
-	long getRecordingDuration();
-	boolean isRecording();
-	boolean isPaused();
-	void release();
+    void addRecordingCallback(AppRecorderCallback recorderCallback);
+
+    void removeRecordingCallback(AppRecorderCallback recorderCallback);
+
+    void setRecorder(RecorderContract.Recorder recorder);
+
+    void startRecording(String filePath, int channelCount, int sampleRate, int bitrate);
+
+    void pauseRecording();
+
+    void resumeRecording();
+
+    void stopRecording();
+
+    IntArrayList getRecordingData();
+
+    long getRecordingDuration();
+
+    boolean isRecording();
+
+    boolean isPaused();
+
+    void release();
 }

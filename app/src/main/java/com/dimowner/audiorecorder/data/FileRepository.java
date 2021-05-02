@@ -22,35 +22,36 @@ import com.dimowner.audiorecorder.exception.CantCreateFileException;
 
 import java.io.File;
 
-public interface FileRepository {
+public interface FileRepository
+{
 
-	File provideRecordFile() throws CantCreateFileException;
+    File provideRecordFile() throws CantCreateFileException;
 
-	File provideRecordFile(String name) throws CantCreateFileException;
+    File provideRecordFile(String name) throws CantCreateFileException;
 
 //	File getRecordFileByName(String name, String extension);
 
-	File[] getPrivateDirFiles(Context context);
+    File[] getPrivateDirFiles(Context context);
 
-	File[] getPublicDirFiles();
+    File[] getPublicDirFiles();
 
-	File getPublicDir();
+    File getPublicDir();
 
-	File getPrivateDir(Context context);
+    File getPrivateDir(Context context);
 
-	File getRecordingDir();
+    File getRecordingDir();
 
-	boolean deleteRecordFile(String path);
+    boolean deleteRecordFile(String path);
 
-	String markAsTrashRecord(String path);
+    String markAsTrashRecord(String path);
 
-	String unmarkTrashRecord(String path);
+    String unmarkTrashRecord(String path);
 
-	boolean deleteAllRecords();
+    boolean deleteAllRecords();
 
-	boolean renameFile(String path, String newName, String extension);
+    boolean renameFile(String path, String newName, String extension);
 
-	void updateRecordingDir(Context context, Prefs prefs);
+    void updateRecordingDir(Context context, Prefs prefs);
 
-	boolean hasAvailableSpace(Context context) throws IllegalArgumentException;
+    boolean hasAvailableSpace(Context context) throws IllegalArgumentException;
 }

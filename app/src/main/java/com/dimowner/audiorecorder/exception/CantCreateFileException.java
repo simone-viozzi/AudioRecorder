@@ -16,10 +16,12 @@
 
 package com.dimowner.audiorecorder.exception;
 
-public class CantCreateFileException extends AppException {
+public class CantCreateFileException extends AppException
+{
 
-	@Override
-	public int getType() {
-		return AppException.CANT_CREATE_FILE;
-	}
+    @Override
+    public int getType()
+    {
+        return AppException.CANT_CREATE_FILE;
+    }
 }

@@ -21,113 +21,131 @@ import android.os.Parcelable;
 
 /**
  * Created on 14.12.2019.
+ *
  * @author Dimowner
  */
-public class RecordItem implements Parcelable {
-	private final int id;
-	private final String name;
-	private final String format;
-	private final long duration;
-	private final long size;
-	private final String path;
-	private final long created;
-	private final int sampleRate;
-	private final int channelCount;
-	private final int bitrate;
+public class RecordItem implements Parcelable
+{
+    public static final Parcelable.Creator<RecordItem> CREATOR
+            = new Parcelable.Creator<RecordItem>()
+    {
+        public RecordItem createFromParcel(Parcel in)
+        {
+            return new RecordItem(in);
+        }
 
-	public RecordItem(int id, String name, long size, String format, long duration, String path, long created,
-							int sampleRate, int channelCount, int bitrate) {
-		this.id = id;
-		this.name = name;
-		this.size = size;
-		this.format = format;
-		this.duration = duration;
-		this.path = path;
-		this.created = created;
-		this.sampleRate = sampleRate;
-		this.channelCount = channelCount;
-		this.bitrate = bitrate;
-	}
+        public RecordItem[] newArray(int size)
+        {
+            return new RecordItem[size];
+        }
+    };
+    private final int id;
+    private final String name;
+    private final String format;
+    private final long duration;
+    private final long size;
+    private final String path;
+    private final long created;
+    private final int sampleRate;
+    private final int channelCount;
+    private final int bitrate;
 
-	public int getId() {
-		return id;
-	}
+    public RecordItem(int id, String name, long size, String format, long duration, String path, long created,
+                      int sampleRate, int channelCount, int bitrate)
+    {
+        this.id = id;
+        this.name = name;
+        this.size = size;
+        this.format = format;
+        this.duration = duration;
+        this.path = path;
+        this.created = created;
+        this.sampleRate = sampleRate;
+        this.channelCount = channelCount;
+        this.bitrate = bitrate;
+    }
 
-	public String getName() {
-		return name;
-	}
+    //----- START Parcelable implementation ----------
+    private RecordItem(Parcel in)
+    {
+        long[] longs = new long[3];
+        in.readLongArray(longs);
+        duration = longs[0];
+        size = longs[1];
+        created = longs[2];
+        String[] data = new String[3];
+        in.readStringArray(data);
+        name = data[0];
+        format = data[1];
+        path = data[2];
+        int[] ints = new int[4];
+        in.readIntArray(ints);
+        id = ints[0];
+        sampleRate = ints[1];
+        channelCount = ints[2];
+        bitrate = ints[3];
+    }
 
-	public long getSize() {
-		return size;
-	}
+    public int getId()
+    {
+        return id;
+    }
 
-	public String getFormat() {
-		return format;
-	}
+    public String getName()
+    {
+        return name;
+    }
 
-	public long getDuration() {
-		return duration;
-	}
+    public long getSize()
+    {
+        return size;
+    }
 
-	public String getPath() {
-		return path;
-	}
+    public String getFormat()
+    {
+        return format;
+    }
 
-	public long getCreated() {
-		return created;
-	}
+    public long getDuration()
+    {
+        return duration;
+    }
 
-	public int getSampleRate() {
-		return sampleRate;
-	}
+    public String getPath()
+    {
+        return path;
+    }
 
-	public int getChannelCount() {
-		return channelCount;
-	}
+    public long getCreated()
+    {
+        return created;
+    }
 
-	public int getBitrate() {
-		return bitrate;
-	}
+    public int getSampleRate()
+    {
+        return sampleRate;
+    }
 
-	//----- START Parcelable implementation ----------
-	private RecordItem(Parcel in) {
-		long[] longs = new long[3];
-		in.readLongArray(longs);
-		duration = longs[0];
-		size = longs[1];
-		created = longs[2];
-		String[] data = new String[3];
-		in.readStringArray(data);
-		name = data[0];
-		format = data[1];
-		path = data[2];
-		int[] ints = new int[4];
-		in.readIntArray(ints);
-		id = ints[0];
-		sampleRate = ints[1];
-		channelCount = ints[2];
-		bitrate = ints[3];
-	}
+    public int getChannelCount()
+    {
+        return channelCount;
+    }
 
-	public int describeContents() {
-		return 0;
-	}
+    public int getBitrate()
+    {
+        return bitrate;
+    }
 
-	public void writeToParcel(Parcel out, int flags) {
-		out.writeLongArray(new long[] {duration, size, created});
-		out.writeStringArray(new String[] {name, format, path});
-		out.writeIntArray(new int[] {id, sampleRate, channelCount, bitrate});
-	}
+    public int describeContents()
+    {
+        return 0;
+    }
 
-	public static final Parcelable.Creator<RecordItem> CREATOR
-			= new Parcelable.Creator<RecordItem>() {
-		public RecordItem createFromParcel(Parcel in) {
-			return new RecordItem(in);
-		}
-
-		public RecordItem[] newArray(int size) {
-			return new RecordItem[size];
-		}
-	};
-	//----- END Parcelable implementation ----------
+    public void writeToParcel(Parcel out, int flags)
+    {
+        out.writeLongArray(new long[]{duration, size, created});
+        out.writeStringArray(new String[]{name, format, path});
+        out.writeIntArray(new int[]{id, sampleRate, channelCount, bitrate});
+    }
+    //----- END Parcelable implementation ----------
 }
